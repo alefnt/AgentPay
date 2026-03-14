@@ -32,17 +32,20 @@ AgentPay is the **first BTC-native payment protocol** designed for AI Agents:
                     AI Agents (Claude, GPT, Grok, Custom)
                               │
                    ┌──────────┼──────────┐
-                   MCP        SDK      Skills
+                   MCP        SDK      Skills     ← AI Integration
+                   └──────────┼──────────┘
+                   ┌──────────┼──────────┐
+                   x402       Hub     Docker      ← Deployment
                    └──────────┼──────────┘
                               │
                      AgentPay Protocol
-              (Hold Invoice + Stablecoin Settlement)
+              (Hold Invoice + Stablecoin + PTLC)
                               │
               ╔═══════════════╧═══════════════╗
-              ║     CKB Fiber Network (L2)    ║  ← CORE
+              ║     CKB Fiber Network (L2)    ║  ← PRIMARY
               ║                               ║  99% of payments
               ║  USDI / USDT / USDC (xUDT)   ║  happen here
-              ║  Zero fee · Millisecond · P2P ║
+              ║  PTLC · Zero fee · ~20ms · P2P║
               ╚═══════════════╤═══════════════╝
                               │
            ┌──────┬───────────┼───────────┬──────┐
