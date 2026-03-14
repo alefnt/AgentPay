@@ -2,7 +2,7 @@
 
 > **Give every AI Agent a wallet. Let Agents pay each other for services — trustlessly.**
 >
-> Powered by CKB [Fiber Network](https://github.com/nervosnetwork/fiber) + [RGB++](https://github.com/RGBPlusPlus/rgbpp-sdk) | x402 Compatible
+> Powered by CKB [Fiber Network](https://github.com/nervosnetwork/fiber) + [RGB++](https://github.com/RGBPlusPlus/rgbpp-sdk) | x402 + [AP2](https://github.com/google-agentic-commerce/AP2) Compatible
 
 ---
 
@@ -166,6 +166,93 @@ const leap = await bridge.leapToCkb({
 const status = await bridge.getLeapStatus(leap.btcTxId);
 ```
 
+### BTC Lightning ↔ CKB Fiber (Cross-Chain Hub)
+
+We are building the bridge between **BTC Lightning Network** and **CKB Fiber Network** using the Cch (Cross-Chain Hub) module:
+
+```
+BTC Lightning Network              CKB Fiber Network
+┌──────────────┐                   ┌──────────────┐
+│  BTC Agent   │                   │  CKB Agent   │
+│  (LND node)  │                   │  (Fiber node)│
+└──────┬───────┘                   └──────┬───────┘
+       │ Lightning HTLC                    │ Fiber PTLC
+       │                                   │
+       └───────────┐       ┌───────────────┘
+                   ▼       ▼
+              ┌──────────────┐
+              │  Cch Module  │
+              │ Atomic Swap  │
+              │ Same Hash H  │
+              └──────────────┘
+              Both succeed or
+              both fail (atomic)
+```
+
+**How it works**: Both networks use HTLC (Hash Time-Locked Contracts). The Cch module locks funds on both sides with the **same hash** — either both payments complete, or both refund. No trust needed.
+
+**Verification Status**:
+
+| Component | Status | Evidence |
+|---|---|---|
+| Fiber Cch source code | ✅ Verified | `cch/config.rs`, `cch/actor.rs` in Fiber repo |
+| Cch RPC methods | ✅ Working | `send_btc` / `receive_btc` / `get_cch_order` respond |
+| Cch → LND gRPC | ✅ Connected | Log: `cch started successfully` |
+| Invoice parsing | ✅ Working | Returns validation error for test invoice (correct) |
+| Real cross-chain payment | 🔄 In progress | LND syncing signet via Neutrino |
+| Wrapped BTC xUDT | ⬜ Not yet | Needs CKB-side BTC representation |
+
+**Docker Quick Start** (full stack):
+```bash
+docker compose up lnd fiber-node-1 -d
+# LND (Neutrino signet) + Fiber (Cch connected to LND)
+```
+
+### Google AP2 Compatibility
+
+AgentPay is compatible with [Google's Agent Payments Protocol (AP2)](https://github.com/google-agentic-commerce/AP2):
+
+```typescript
+import { AP2Adapter } from '@agentpay/ap2';
+
+const adapter = new AP2Adapter({
+  agentDid: 'did:bit:my-agent.bit',  // .bit DID identity
+  signingKeyHex: '...',
+});
+
+// Create AP2 Intent Mandate (W3C Verifiable Credential)
+const mandate = await adapter.createIntentMandate({
+  intent: 'translate text to Chinese',
+  maxAmount: '1000000000',
+  currency: 'CKB',
+});
+
+// Process incoming AP2 mandate → Fiber Hold Invoice
+const request = adapter.processIntentMandate(incomingMandate);
+```
+
+**AP2 Mandate ↔ Fiber Hold Invoice mapping**:
+- `IntentMandate` → Service Request
+- `PaymentMandate` → Hold Invoice (HTLC lock)
+- `Receipt` → Settled Invoice (preimage proof)
+
+### .bit Identity (CKB DID)
+
+Each Agent gets a decentralized identity via [.bit protocol](https://d.id):
+
+```typescript
+import { BitIdentity } from '@agentpay/core';
+
+const identity = new BitIdentity();
+
+// Resolve .bit name → CKB address
+const account = await identity.resolve('translator.bit');
+console.log(account?.did);  // "did:bit:translator.bit"
+
+// Auto-register .bit for your Agent
+const order = await identity.register('my-agent.bit', ckbAddress);
+```
+
 ### Agent Skills
 
 AgentPay can be used as an **Agent Skill** by any AI framework:
@@ -180,15 +267,16 @@ Any Agent that reads this skill file learns how to pay for services, sell servic
 
 ```
 packages/
-├── core/                 # @agentpay/core — Fiber RPC + RGB++ Bridge + Protocol Types
+├── core/                 # @agentpay/core — Fiber RPC + RGB++ + .bit Identity
 │   ├── src/
 │   │   ├── fiber-rpc.ts     # Full Fiber RPC (Channel/Invoice/Payment/Cch)
 │   │   ├── rgbpp-bridge.ts  # RGB++ Asset Bridge (Leap BTC↔CKB)
+│   │   ├── bit-identity.ts  # .bit DID (resolve/register/DID helpers)
 │   │   ├── types.ts         # Protocol types (matches Fiber spec)
 │   │   ├── assets.ts        # Asset registry (CKB/BTC/USDT/USDC/USDI/WBTC)
 │   │   ├── identity.ts      # Agent identity (= Fiber node pubkey)
-│   │   └── logger.ts        # Zero-dep structured logger (pino-compatible)
-│   └── tests/               # 66 unit tests
+│   │   └── logger.ts        # Zero-dep structured logger
+│   └── tests/               # 66+ unit tests
 │
 ├── sdk/                  # @agentpay/sdk — Developer SDK
 │   └── src/
@@ -196,12 +284,14 @@ packages/
 │       ├── provider.ts      # ServiceProvider — sell services (HTTP)
 │       └── hub-client.ts    # HubClient — managed mode (no Fiber node)
 │
+├── ap2/                  # @agentpay/ap2 — Google AP2 Compatibility
+│   └── src/
+│       ├── types.ts         # W3C VC Mandate types (IntentMandate/PaymentMandate/Receipt)
+│       ├── adapter.ts       # AP2 Mandate ↔ Fiber Hold Invoice adapter
+│       └── verify.ts        # Ed25519 VC signature verify/sign
+│
 ├── mcp-server/           # @agentpay/mcp-server — Claude/GPT MCP Tools
-│   └── src/index.ts         # 5 MCP tools (pay_and_call, etc.)
-│
 ├── x402-facilitator/     # @agentpay/x402-facilitator — x402 Compatibility
-│   └── src/index.ts         # /verify + /settle + /schemes
-│
 └── create-agentpay/      # create-agentpay — One-command project generator
 
 services/
@@ -209,10 +299,10 @@ services/
 └── registry/             # Agent service discovery
 
 deploy/
-├── Dockerfile            # Multi-stage build (includes Fiber node)
-├── fiber-config-*.yml    # Fiber node configuration
-docker-compose.yml        # One-click deployment (Fiber + Agent)
-.github/workflows/ci.yml  # GitHub Actions CI/CD
+├── Dockerfile.fiber       # Fiber v0.7.1 node (official binary)
+├── lnd.conf               # LND config (Neutrino signet)
+├── fiber-testnet-config.yml  # Fiber config + Cch cross-chain
+docker-compose.yml         # Full stack: LND + Fiber + Cch
 ```
 
 ## Supported Assets
@@ -261,21 +351,24 @@ pnpm -r test      # Run 161 tests
 
 - [x] **Phase 1**: Core SDK + Hold Invoice payments
 - [x] **Phase 2**: MCP Server + x402 Facilitator + Agent Skills
-- [x] **Phase 3**: RGB++ Bridge integration (BTC↔CKB Leap)
-- [ ] **Phase 4**: Mainnet deployment + Fiber mainnet channels + CKB Grant
+- [x] **Phase 3**: RGB++ Bridge + Cch cross-chain verification
+- [x] **Phase 3.5**: AP2 compatibility + .bit DID identity
+- [ ] **Phase 4**: End-to-end BTC Lightning ↔ Fiber payment
+- [ ] **Phase 5**: Mainnet deployment + CKB Grant
 
 ## Test Coverage
 
 | Package | Tests |
 |---|---|
-| @agentpay/core | 66 (incl. RGB++ 13) |
+| @agentpay/core | 66+ (incl. RGB++ 13, .bit 4) |
 | @agentpay/sdk | 17 |
+| @agentpay/ap2 | 7 |
 | Hub Server | 23 |
 | Registry Server | 27 |
 | x402 Facilitator | 10 |
 | MCP Server | 11 |
 | create-agentpay CLI | 7 |
-| **Total** | **161** |
+| **Total** | **172+** |
 
 ## License
 
