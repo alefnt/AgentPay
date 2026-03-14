@@ -52,6 +52,10 @@ export interface WalletConfig {
   fiberRpcUrl?: string;
   /** Currency for invoices */
   currency?: FiberCurrency;
+  /** Default payment asset (default: 'USDI' — stablecoin first) */
+  defaultAsset?: AssetType;
+  /** Agent's .bit account for DID identity (e.g. "my-agent.bit") */
+  bitAccount?: string;
   /** Private key hex for message signing (optional, for protocol auth) */
   signingKey?: string;
   /** RGB++ Bridge config (optional, enables BTC↔CKB asset bridging) */
