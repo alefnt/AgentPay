@@ -40,8 +40,16 @@ import { FiberRpcClient, resolveAssetScript, type AssetType, type Hash256, type 
  * Payment requirements sent in HTTP 402 response.
  * The key difference from Coinbase's x402: we use Fiber invoices.
  */
+/**
+ * Payment scheme types:
+ *   - exact: Pay fixed amount upfront (same as Coinbase x402)
+ *   - hold: Lock funds via PTLC → provider works → settle or refund (AgentPay unique)
+ *   - upto: Lock max amount → pay actual usage → refund remainder
+ */
+export type PaymentScheme = 'exact' | 'hold' | 'upto';
+
 export interface PaymentRequirements {
-  scheme: 'exact';
+  scheme: PaymentScheme;
   network: 'ckb-fiber' | 'ckb-fiber-udt';
   maxAmountRequired: string;
   asset: AssetType;
@@ -53,6 +61,15 @@ export interface PaymentRequirements {
     paymentHash: string;
     facilitatorUrl: string;
     expiresAt: number;
+    /** Hold-specific: preimage is held by provider until work is done */
+    holdMode?: {
+      /** Timeout in seconds — auto-refund if provider doesn't settle */
+      timeoutSeconds: number;
+      /** Provider's agent ID (Fiber pubkey) */
+      providerAgentId: string;
+      /** Whether the hold invoice has been settled */
+      settled: boolean;
+    };
   };
 }
 
@@ -60,7 +77,7 @@ export interface PaymentRequirements {
  * Payment payload sent by x402 client after paying.
  */
 export interface PaymentPayload {
-  scheme: 'exact';
+  scheme: PaymentScheme;
   network: 'ckb-fiber' | 'ckb-fiber-udt';
   paymentHash: string;
   amount: string;
@@ -68,6 +85,8 @@ export interface PaymentPayload {
   payer: string;          // Fiber node pubkey of payer
   signature: string;
   timestamp: number;
+  /** Hold-specific: preimage for settlement (provider sets this after work) */
+  preimage?: string;
 }
 
 export interface VerifyResult {
@@ -129,6 +148,62 @@ export class X402Facilitator {
         paymentHash: invoice.data.payment_hash,
         facilitatorUrl: process.env.FACILITATOR_URL || 'http://localhost:4020',
         expiresAt: Date.now() + 600_000,
+      },
+    };
+  }
+
+  /**
+   * Create HOLD payment requirements — AgentPay's unique scheme.
+   *
+   * Unlike 'exact' (pay upfront, pray for delivery), 'hold' locks funds
+   * via Fiber PTLC. Provider works, then settles with preimage to collect.
+   * If provider doesn't deliver, funds auto-refund after timeout.
+   *
+   * Flow:
+   *   1. Provider creates Hold Invoice (preimage kept secret)
+   *   2. Client pays Hold Invoice → funds LOCKED (not transferred)
+   *   3. Provider does the work
+   *   4. Provider reveals preimage → funds SETTLED to provider
+   *   5. If timeout → funds automatically REFUNDED to client
+   *
+   * x402 exact: Client pays $1 → Server takes $1 → Server maybe delivers
+   * AgentPay hold: Client locks $1 → Server works → Server earns $1 OR Client gets refund
+   */
+  async createHoldRequirements(
+    resource: string,
+    amount: string,
+    providerAgentId: string,
+    asset: AssetType = 'USDI',
+    description?: string,
+    timeoutSeconds: number = 600,
+  ): Promise<PaymentRequirements> {
+    const udtScript = asset !== 'CKB' ? resolveAssetScript(asset) : undefined;
+
+    const { invoice_address, invoice } = await this.fiber.newInvoice({
+      amount,
+      currency: this.currency,
+      description: description || `AgentPay hold: ${resource}`,
+      expiry: timeoutSeconds,
+      ...(udtScript ? { udt_type_script: udtScript } : {}),
+    });
+
+    return {
+      scheme: 'hold',
+      network: asset === 'CKB' ? 'ckb-fiber' : 'ckb-fiber-udt',
+      maxAmountRequired: amount,
+      asset,
+      resource,
+      description,
+      extra: {
+        fiberInvoice: invoice_address,
+        paymentHash: invoice.data.payment_hash,
+        facilitatorUrl: process.env.FACILITATOR_URL || 'http://localhost:4020',
+        expiresAt: Date.now() + timeoutSeconds * 1000,
+        holdMode: {
+          timeoutSeconds,
+          providerAgentId,
+          settled: false,
+        },
       },
     };
   }
@@ -363,11 +438,14 @@ export function startFacilitatorServer(port: number = 4020): void {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           facilitator: 'agentpay',
-          settlementLayer: 'CKB Fiber Network',
+          settlementLayer: 'CKB Fiber Network (PTLC)',
           advantage: 'Millisecond settlement, near-zero fees, Hold Invoice trustless escrow',
           schemes: [
-            { scheme: 'exact', network: 'ckb-fiber', assets: ['CKB'], description: 'Native CKB via Fiber' },
-            { scheme: 'exact', network: 'ckb-fiber-udt', assets: ['USDT', 'USDC', 'USDI', 'WBTC'], description: 'UDT tokens via Fiber' },
+            { scheme: 'exact', network: 'ckb-fiber', assets: ['CKB'], description: 'Pay fixed amount upfront (standard x402)' },
+            { scheme: 'exact', network: 'ckb-fiber-udt', assets: ['USDI', 'USDT', 'USDC'], description: 'Pay fixed amount in stablecoin' },
+            { scheme: 'hold', network: 'ckb-fiber', assets: ['CKB'], description: '🔒 Lock funds → provider works → settle or auto-refund (AgentPay unique)' },
+            { scheme: 'hold', network: 'ckb-fiber-udt', assets: ['USDI', 'USDT', 'USDC'], description: '🔒 Lock stablecoin → provider works → settle or auto-refund' },
+            { scheme: 'upto', network: 'ckb-fiber-udt', assets: ['USDI'], description: 'Lock max → pay actual usage → refund remainder (metered)' },
           ],
         }));
         return;

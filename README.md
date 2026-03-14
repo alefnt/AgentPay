@@ -185,8 +185,7 @@ BTC Lightning Network              CKB Fiber Network
 │  BTC Agent   │                   │  CKB Agent   │
 │  (LND node)  │                   │  (Fiber node)│
 └──────┬───────┘                   └──────┬───────┘
-       │ Lightning HTLC                    │ Fiber HTLC
-       │                                   │ (PTLC on roadmap)
+       │ Lightning HTLC                    │ Fiber PTLC
        │                                   │
        └───────────┐       ┌───────────────┘
                    ▼       ▼
@@ -199,7 +198,7 @@ BTC Lightning Network              CKB Fiber Network
               both fail (atomic)
 ```
 
-**How it works**: Both networks use HTLC (Hash Time-Locked Contracts). Fiber's roadmap includes upgrading to PTLC (Point Time-Locked Contracts) for better privacy. The Cch module bridges between them using a shared hash — either both payments complete, or both refund. No trust needed.
+**How it works**: Lightning uses HTLC (Hash Time-Locked Contracts), Fiber uses PTLC (Point Time-Locked Contracts — more private, per official Fiber spec). The Cch module bridges between them: it translates HTLC↔PTLC via adaptor signatures, using a shared preimage for atomicity — either both payments complete, or both refund. No trust needed.
 
 **Verification Status**:
 
