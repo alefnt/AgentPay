@@ -6,7 +6,7 @@
  *
  * Lifecycle mapping:
  *   AP2 IntentMandate  →  AgentPay Service Request
- *   AP2 PaymentMandate →  Fiber Hold Invoice (HTLC lock)
+ *   AP2 PaymentMandate →  Fiber Hold Invoice (PTLC lock)
  *   AP2 Receipt        ←  Fiber Invoice Settlement (preimage)
  *
  * Design principle: THIN COMPATIBILITY LAYER
