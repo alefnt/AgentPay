@@ -1,4 +1,4 @@
-# Fiber Node 1 Configuration (Provider Agent)
+# Fiber Node 1 Configuration (Provider Agent + Cch Hub)
 # See: https://github.com/nervosnetwork/fiber
 
 [fiber]
@@ -18,3 +18,14 @@ path = "/data/fiber-1"
 # Network
 [network]
 bootnode_addrs = []
+
+# ─── Cross-Chain Hub (BTC Lightning ↔ Fiber) ───────────
+# Connects this Fiber node to a Lightning Network node (LND)
+# enabling BTC ↔ CKB atomic swaps via Cch
+[cch]
+# LND gRPC endpoint (inside Docker network)
+lnd_rpc_url = "https://lnd:10009"
+# LND TLS certificate (shared via Docker volume)
+lnd_cert_path = "/lnd/tls.cert"
+# LND admin macaroon (shared via Docker volume)
+lnd_macaroon_path = "/lnd/data/chain/bitcoin/signet/admin.macaroon"
