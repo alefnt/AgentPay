@@ -1,77 +1,59 @@
 # AgentPay — Docker Deployment
 #
 # Services:
-#   fiber-node-1:   Fiber Network node (Provider Agent) + Cch cross-chain hub
-#   fiber-node-2:   Fiber Network node (Caller Agent)
-#   lnd:            Lightning Network node (BTC signet) for Cch
-#   bitcoind:       Bitcoin signet node (LND backend)
+#   fiber-node-1:   Fiber Network node (Provider) + Cch cross-chain hub
+#   fiber-node-2:   Fiber Network node (Caller)
+#   lnd:            Lightning Network node (BTC signet, Neutrino mode)
 #   provider-agent: Translation service Provider
 #   x402:           x402 Facilitator (bridges x402 ↔ Fiber)
 #
-# Usage:
-#   docker compose up -d
-#
-# Fiber-only (quick start):
+# Quick start (Fiber only):
 #   docker compose up fiber-node-1 -d
+#
+# Full stack (BTC Lightning ↔ Fiber):
+#   docker compose up lnd fiber-node-1 -d
 #
 # BTC Lightning ↔ Fiber flow:
 #   BTC Agent (Lightning) → LND → Cch (fiber-node-1) → Fiber → CKB Agent
 
-version: '3.8'
-
 services:
-  # ─── Bitcoin Signet Node ────────────────────────────────
-  bitcoind:
-    image: btcpayserver/bitcoin:27.0
-    container_name: agentpay-bitcoind
-    environment:
-      BITCOIN_NETWORK: signet
-    volumes:
-      - bitcoind-data:/data
-      - ./deploy/bitcoin.conf:/data/bitcoin.conf:ro
-    ports:
-      - "18443:18443"
-      - "38333:38333"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "bitcoin-cli", "-signet", "getblockchaininfo"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  # ─── Lightning Network Node (LND) ──────────────────────
+  # ─── Lightning Network Node (LND + Neutrino) ───────────
+  # No local bitcoind needed — uses Neutrino lightweight sync
   lnd:
     image: lightninglabs/lnd:v0.18.0-beta
     container_name: agentpay-lnd
-    depends_on:
-      bitcoind:
-        condition: service_healthy
     volumes:
       - lnd-data:/root/.lnd
       - ./deploy/lnd.conf:/root/.lnd/lnd.conf:ro
     ports:
-      - "9735:9735"
-      - "10009:10009"
-      - "8080:8080"
+      - "9735:9735"     # P2P
+      - "10009:10009"   # gRPC
+      - "8080:8080"     # REST
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "lncli", "--network=signet", "getinfo"]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
+      start_period: 60s
 
   # ─── Fiber Node 1 (Provider + Cch Hub) ─────────────────
-  # Uses official FNN v0.7.1 binary (same as video-platform)
+  # Uses official FNN v0.7.1 binary
+  # Cch connects to LND for BTC Lightning ↔ Fiber atomic swaps
   fiber-node-1:
     build:
       context: .
       dockerfile: deploy/Dockerfile.fiber
     container_name: agentpay-fiber-1
+    depends_on:
+      lnd:
+        condition: service_healthy
     ports:
       - "8227:8227"    # RPC
       - "8228:8228"    # P2P
     volumes:
       - fiber1-data:/app/data
+      - lnd-data:/lnd:ro    # Share LND certs/macaroons for Cch
     environment:
       - RUST_LOG=info
       - FIBER_SECRET_KEY_PASSWORD=agentpay_dev_2025
@@ -95,6 +77,7 @@ services:
       - fiber2-data:/app/data
     environment:
       - RUST_LOG=info
+      - FIBER_SECRET_KEY_PASSWORD=agentpay_dev_2025
     restart: unless-stopped
 
   # ─── Provider Agent (Translation) ──────────────────────
@@ -132,7 +115,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  bitcoind-data:
   lnd-data:
   fiber1-data:
   fiber2-data:

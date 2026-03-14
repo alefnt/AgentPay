@@ -64,3 +64,23 @@ services:
   - rpc
   - ckb
   - cch
+
+# ─── Cross-Chain Hub (BTC Lightning ↔ Fiber) ───────────
+# Connects to LND gRPC for BTC ↔ CKB atomic swaps
+# Config keys from: crates/fiber-lib/src/cch/config.rs
+cch:
+  # LND gRPC endpoint (Docker service name)
+  lnd_rpc_url: "https://lnd:10009"
+  # LND TLS certificate (shared via Docker volume)
+  lnd_cert_path: "/lnd/tls.cert"
+  # LND admin macaroon (shared via Docker volume)
+  lnd_macaroon_path: "/lnd/data/chain/bitcoin/signet/admin.macaroon"
+  # Wrapped BTC type script args (xUDT representing BTC on CKB)
+  # This is the args field of the type script for the wrapped BTC token
+  # TODO: deploy wrapped BTC xUDT on testnet and fill in the actual args
+  wrapped_btc_type_script_args: "0x0000000000000000000000000000000000000000000000000000000000000000"
+  # Cross-chain order expiry (seconds)
+  order_expiry_delta_seconds: 3600
+  # Fee: 0 base + 1 per million sats
+  base_fee_sats: 0
+  fee_rate_per_million_sats: 1
