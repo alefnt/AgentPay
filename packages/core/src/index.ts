@@ -41,6 +41,14 @@ export type {
   LeapResult,
 } from './rgbpp-bridge.js';
 
+// .bit Identity (CKB DID)
+export { BitIdentity } from './bit-identity.js';
+export type {
+  BitAccount,
+  BitRecord,
+  BitIdentityConfig,
+} from './bit-identity.js';
+
 // Types — re-export everything
 export type {
   // CKB / Fiber native types
@@ -84,4 +92,3 @@ export type {
   // Registration
   AgentRegistration,
 } from './types.js';
-
