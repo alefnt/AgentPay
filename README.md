@@ -26,25 +26,34 @@ AgentPay is the **first BTC-native payment protocol** designed for AI Agents:
 
 ## Architecture
 
+> **Core = Fiber + Stablecoins. Extensions = Ecosystem On-ramps.**
+
 ```
-┌─────────────────────────────────────────────────┐
-│  AI Agents (Claude, GPT, Grok, Custom)           │
-│                                                  │
-│  MCP Server ←→ @agentpay/sdk                     │
-├─────────────────────────────────────────────────┤
-│  AgentPay Protocol Layer                         │
-│  REQUEST → OFFER → PAY (Hold Invoice) → EXECUTE │
-│  ↕ x402 Facilitator (ETH bridge)                 │
-├─────────────────────────────────────────────────┤
-│  CKB Fiber Network (L2 Payment Channels)         │
-│  Channel / Invoice / Payment / Cch               │
-├─────────────────────────────────────────────────┤
-│  RGB++ (BTC ↔ CKB Asset Bridge)                  │
-│  xUDT Leap / BtcAssetsApi / Paymaster            │
-├─────────────────────────────────────────────────┤
-│  CKB L1 (PoW + UTXO) + BTC L1                   │
-└─────────────────────────────────────────────────┘
+                    AI Agents (Claude, GPT, Grok, Custom)
+                              │
+                   ┌──────────┼──────────┐
+                   MCP        SDK      Skills
+                   └──────────┼──────────┘
+                              │
+                     AgentPay Protocol
+              (Hold Invoice + Stablecoin Settlement)
+                              │
+              ╔═══════════════╧═══════════════╗
+              ║     CKB Fiber Network (L2)    ║  ← CORE
+              ║                               ║  99% of payments
+              ║  USDI / USDT / USDC (xUDT)   ║  happen here
+              ║  Zero fee · Millisecond · P2P ║
+              ╚═══════════════╤═══════════════╝
+                              │
+           ┌──────┬───────────┼───────────┬──────┐
+           │      │           │           │      │
+         x402    Cch        RGB++       AP2    Fiat
+         ETH     BTC         BTC       Google  Future
+         agents  on/off     assets     agents  compliant
+                 ramp       bridge              on-ramp
 ```
+
+> See [docs/architecture.md](docs/architecture.md) for the full layered architecture.
 
 ## Quick Start
 

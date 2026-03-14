@@ -19,56 +19,87 @@ AI Agents are getting smarter every day. But they can't spend money.
 
 AgentPay provides:
 
-1. **Agent Wallet** — Each Agent has a keypair (identity) and a Fiber payment channel
-2. **Pay-and-Call** — `wallet.payAndCall('translate', {text, target})` — 3 lines of code
+1. **Agent Wallet** — Each Agent has a keypair + Fiber channel + .bit DID
+2. **Stablecoin Settlement** — Pay in USDI/USDT (no volatility, real-world pricing)
 3. **Hold Invoice** — Trustless escrow: lock funds → Agent works → unlock with preimage
 4. **Service Registry** — Agents discover and compare each other's services
-5. **Multi-asset** — CKB, BTC (via Cch), stablecoins (via RGB++/xUDT)
+5. **Ecosystem Extensions** — x402 (ETH), Cch (BTC), RGB++ (BTC assets), AP2 (Google)
 
 ## Why Fiber Network?
 
 | Requirement | Why it matters for Agents | How Fiber solves it |
 |---|---|---|
-| **Trustless guarantee** | Agents operate unsupervised — can't call customer support if scammed | Hold Invoice: lock → work → unlock OR timeout → refund |
-| **True micropayments** | Agent tasks cost $0.001-0.01, needs zero-fee payments | Channel-internal: no gas, no on-chain tx, truly free |
-| **Millisecond speed** | Agents make decisions in ms, can't wait 2s per payment | P2P channel: latency = network RTT (~20ms) |
-| **BTC native** | BTC is the largest crypto ecosystem, most Agents' users hold BTC | Cch: Lightning ↔ Fiber atomic swap, verified working |
-| **Multi-asset channels** | Different services price in different currencies | Single channel carries CKB + BTC + any xUDT token |
-| **Programmable** | Payment logic needs to be composable with Agent logic | CKB Script (RISC-V) — Turing complete on-chain logic |
+| **Trustless guarantee** | Agents operate unsupervised — can't call customer support | Hold Invoice: lock → work → unlock OR timeout → refund |
+| **Stablecoin channels** | Agent tasks priced in dollars, not volatile crypto | xUDT stablecoins in Fiber channels |
+| **True micropayments** | Agent tasks cost $0.001-0.01, needs zero-fee | Channel-internal: no gas, truly free |
+| **Millisecond speed** | Agents make decisions in ms | P2P channel: ~20ms |
+| **BTC on-ramp** | Largest crypto user base | Cch: Lightning ↔ Fiber |
+| **Multi-asset** | Different currencies needed | Single channel carries CKB + BTC + any xUDT |
 
-### Why NOT Lightning?
-Lightning only carries BTC. No stablecoins, no custom tokens. No Hold Invoice standard. No multi-asset channels.
+## vs Web2 Payments (Stripe / Alipay)
 
-### Why NOT Base L2 (x402)?
-Every payment requires an on-chain transaction (~2s, ~$0.0001). That's fine for humans, but Agents doing 1000 calls/day need true zero-fee, instant settlement.
-
-### Why NOT Solana/TON?
-No payment channels (every tx is on-chain). No trustless escrow (Hold Invoice). Not BTC-native.
-
-## What We've Built (Phase 1-3)
-
-| Component | Status | What it does |
+| Dimension | Web2 (Stripe/Alipay) | AgentPay (Fiber) |
 |---|---|---|
-| @agentpay/core | ✅ 66 tests | Fiber RPC client + RGB++ Bridge + Asset registry |
-| @agentpay/sdk | ✅ 17 tests | AgentWallet, ServiceProvider, HubClient |
-| @agentpay/mcp-server | ✅ 11 tests | Claude/GPT can pay via MCP tools |
-| @agentpay/x402 | ✅ 10 tests | ETH Agent compatibility (x402 bridge) |
-| Hub Server | ✅ 23 tests | Managed Fiber access (zero infrastructure) |
-| Registry | ✅ 27 tests | Agent service discovery |
-| Docker Stack | ✅ Verified | LND + Fiber + Cch — full BTC cross-chain |
-| **Total** | **161 tests** | |
+| Agent can open account | ❌ Requires human KYC | ✅ Keypair = account |
+| Micropayments | ❌ Stripe min $0.50 + 2.9% fee | ✅ $0.001, zero fee |
+| Settlement speed | 3-7 days | ✅ Milliseconds |
+| Cross-border | ⚠️ Region-locked | ✅ Borderless |
+| Trustless escrow | ❌ Human arbitration | ✅ Hold Invoice (automatic) |
+| Compliance | ✅ Full KYC/AML | ⚠️ Needs compliance layer |
+| User experience | ✅ Bind card, done | ⚠️ Needs wallet (Hub mode helps) |
+| Fiat support | ✅ Native | ⚠️ Via compliant stablecoins |
 
-## What's Verified on Live Testnet
+**AgentPay doesn't replace Stripe — it does what Stripe can't**: let AI Agents without bank accounts pay each other autonomously, with cryptographic guarantees, for fractions of a cent.
 
-- ✅ Fiber v0.7.1 node running (Docker, 2 peers connected)
-- ✅ Cch module connected to LND (`cch started successfully`)
-- ✅ LND v0.18.0-beta running (Neutrino signet)
-- ✅ All 3 Cch RPC methods respond (send_btc, receive_btc, get_cch_order)
-- ✅ RGB++ Bridge code integrated (BTC ↔ CKB asset Leap)
+**Bridging the gap**: Hub managed mode abstracts away wallets/channels (API Key = done). Fiat on-ramp via compliant stablecoins (user sees "$0.01" not "10000 shannons").
+
+## Fiat Currency Path
+
+Sovereign currencies (USD, RMB) can flow into AgentPay via compliant stablecoins:
+
+```
+User pays $10 USD
+    → Compliant exchange (e.g. Circle, licensed provider)
+    → 10 USDI xUDT on CKB
+    → Deposited to Fiber channel
+    → Agent uses USDI for 1000 micropayments ($0.01 each)
+    
+Agent withdraws earnings  
+    → Fiber channel → CKB L1
+    → Compliant exchange → USD to bank account
+```
+
+Fiber channels don't care what xUDT token they carry. If a compliant issuer deploys a 1:1 USD-backed xUDT on CKB, that's effectively dollar payments on Fiber.
+
+## Honest Risks
+
+| Risk | Severity | Mitigation |
+|---|---|---|
+| **Fiber has no mainnet** | 🔴 Critical | All code runs on testnet. We wait for Fiber team. |
+| **No stablecoin deployed on CKB** | 🔴 Blocking | USDI/USDT not yet issued as xUDT. Need issuer. |
+| **Channel liquidity** | 🟡 Medium | Fiber needs enough nodes with open channels. |
+| **Compliance** | 🟡 Medium | AP2's VC Mandate framework helps. Need legal work. |
+| **Fiber adoption** | 🟡 Medium | Small ecosystem. But: first mover advantage. |
+
+## What We've Built
+
+| Component | Status | Tests |
+|---|---|---|
+| @agentpay/core (Fiber RPC + .bit) | ✅ | 70+ |
+| @agentpay/sdk (Wallet + Provider + Hub) | ✅ | 17 |
+| @agentpay/ap2 (Google AP2) | ✅ | 7 |
+| @agentpay/mcp-server (Claude/GPT) | ✅ | 11 |
+| @agentpay/x402 (ETH compat) | ✅ | 10 |
+| Hub + Registry servers | ✅ | 50 |
+| Docker (LND + Fiber + Cch) | ✅ Verified | — |
+| **Total** | | **172+** |
 
 ## Roadmap
 
 - [x] Phase 1: Core SDK + Hold Invoice
 - [x] Phase 2: MCP + x402 + Agent Skills
 - [x] Phase 3: RGB++ Bridge + Cch verification
-- [ ] Phase 4: Mainnet (when Fiber mainnet launches)
+- [x] Phase 3.5: AP2 + .bit DID identity
+- [ ] Phase 4: End-to-end BTC Lightning ↔ Fiber payment
+- [ ] Phase 5: Stablecoin deployment on CKB testnet
+- [ ] Phase 6: Mainnet (when Fiber mainnet launches)
