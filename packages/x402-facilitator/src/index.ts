@@ -213,7 +213,7 @@ export class X402Facilitator {
    */
   async verify(payload: PaymentPayload, requirements: PaymentRequirements): Promise<VerifyResult> {
     // 1. Scheme check
-    if (payload.scheme !== 'exact') {
+    if (payload.scheme !== 'exact' && payload.scheme !== 'hold') {
       return { isValid: false, invalidReason: `Unsupported scheme: ${payload.scheme}` };
     }
     if (!payload.network.startsWith('ckb-fiber')) {
@@ -225,10 +225,13 @@ export class X402Facilitator {
       return { isValid: false, invalidReason: `Insufficient amount: ${payload.amount} < ${requirements.maxAmountRequired}` };
     }
 
-    // 3. Timestamp check (not older than 5 minutes)
+    // 3. Timestamp check (not older than 5 minutes for exact, timeout for hold)
     const now = Math.floor(Date.now() / 1000);
-    if (now - payload.timestamp > 300) {
-      return { isValid: false, invalidReason: 'Payment expired (>5 min old)' };
+    const maxAge = payload.scheme === 'hold'
+      ? (requirements.extra.holdMode?.timeoutSeconds || 600)
+      : 300;
+    if (now - payload.timestamp > maxAge) {
+      return { isValid: false, invalidReason: `Payment expired (>${maxAge}s old)` };
     }
 
     // 4. Verify on Fiber
@@ -237,6 +240,18 @@ export class X402Facilitator {
         payment_hash: payload.paymentHash.startsWith('0x') ? payload.paymentHash : `0x${payload.paymentHash}`,
       });
 
+      if (payload.scheme === 'hold') {
+        // For hold: 'Received' = funds locked (good), 'Paid' = already settled
+        if (invoiceStatus.status === 'Received') {
+          return { isValid: true };
+        }
+        if (invoiceStatus.status === 'Paid') {
+          return { isValid: true }; // Already settled — still valid
+        }
+        return { isValid: false, invalidReason: `Hold invoice status: ${invoiceStatus.status}` };
+      }
+
+      // exact scheme — original logic
       if (invoiceStatus.status === 'Received' || invoiceStatus.status === 'Paid') {
         return { isValid: true };
       }
@@ -264,7 +279,7 @@ export class X402Facilitator {
   }
 
   /**
-   * Settle a verified payment on Fiber.
+   * Settle a verified payment on Fiber (exact scheme).
    */
   async settle(payload: PaymentPayload): Promise<SettleResult> {
     try {
@@ -287,6 +302,59 @@ export class X402Facilitator {
       return { success: false, error: `Payment still in progress: ${payment.status}` };
     } catch (err: any) {
       return { success: false, error: err.message };
+    }
+  }
+
+  /**
+   * Settle a HOLD payment — provider calls this after completing work.
+   *
+   * The preimage is the secret that releases locked funds to the provider.
+   * This is the key difference from 'exact': funds don't move until
+   * the provider proves they delivered the service.
+   *
+   * @param paymentHash - The payment hash of the hold invoice
+   * @param preimage - The preimage (secret) that settles the invoice
+   */
+  async settleHold(paymentHash: string, preimage: string): Promise<SettleResult> {
+    const prefixedHash = paymentHash.startsWith('0x') ? paymentHash : `0x${paymentHash}`;
+    const prefixedPreimage = preimage.startsWith('0x') ? preimage : `0x${preimage}`;
+
+    try {
+      // Verify invoice is in 'Received' state (funds locked)
+      const invoiceStatus = await this.fiber.getInvoice({ payment_hash: prefixedHash });
+
+      if (invoiceStatus.status === 'Paid') {
+        return { success: true, txHash: paymentHash }; // Already settled
+      }
+
+      if (invoiceStatus.status !== 'Received') {
+        return { success: false, error: `Cannot settle: invoice status is '${invoiceStatus.status}', expected 'Received'` };
+      }
+
+      // Settle by revealing preimage
+      await this.fiber.settleInvoice({
+        payment_hash: prefixedHash,
+        payment_preimage: prefixedPreimage,
+      });
+
+      return { success: true, txHash: paymentHash };
+    } catch (err: any) {
+      return { success: false, error: `Hold settlement failed: ${err.message}` };
+    }
+  }
+
+  /**
+   * Cancel a HOLD payment — refund locked funds to the client.
+   * Called when provider can't deliver or wants to reject.
+   */
+  async cancelHold(paymentHash: string): Promise<SettleResult> {
+    const prefixedHash = paymentHash.startsWith('0x') ? paymentHash : `0x${paymentHash}`;
+
+    try {
+      await this.fiber.cancelInvoice({ payment_hash: prefixedHash });
+      return { success: true, txHash: paymentHash };
+    } catch (err: any) {
+      return { success: false, error: `Hold cancellation failed: ${err.message}` };
     }
   }
 }
@@ -461,6 +529,18 @@ export function startFacilitatorServer(port: number = 4020): void {
         return;
       }
 
+      // Hold scheme: create hold requirements (AgentPay unique)
+      if (req.method === 'POST' && url === '/x402/create-hold') {
+        const body = JSON.parse(await readBody(req));
+        const requirements = await facilitator.createHoldRequirements(
+          body.resource, body.amount, body.providerAgentId,
+          body.asset, body.description, body.timeoutSeconds,
+        );
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(requirements));
+        return;
+      }
+
       if (req.method === 'POST' && url === '/x402/verify') {
         const body = JSON.parse(await readBody(req));
         const result = await facilitator.verify(body.paymentPayload, body.paymentRequirements);
@@ -472,6 +552,24 @@ export function startFacilitatorServer(port: number = 4020): void {
       if (req.method === 'POST' && url === '/x402/settle') {
         const body = JSON.parse(await readBody(req));
         const result = await facilitator.settle(body.paymentPayload);
+        res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(result));
+        return;
+      }
+
+      // Hold scheme: settle with preimage (provider earned payment)
+      if (req.method === 'POST' && url === '/x402/settle-hold') {
+        const body = JSON.parse(await readBody(req));
+        const result = await facilitator.settleHold(body.paymentHash, body.preimage);
+        res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(result));
+        return;
+      }
+
+      // Hold scheme: cancel / refund to client
+      if (req.method === 'POST' && url === '/x402/cancel-hold') {
+        const body = JSON.parse(await readBody(req));
+        const result = await facilitator.cancelHold(body.paymentHash);
         res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(result));
         return;
