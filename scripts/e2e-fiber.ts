@@ -21,8 +21,8 @@
  *   5. Full payAndCall flow (if 2+ nodes available)
  */
 
-import { FiberRpcClient, createLogger } from '@agentpay/core';
-import { ServiceProvider, AgentWallet } from '@agentpay/sdk';
+import { FiberRpcClient, createLogger } from '../packages/core/src/index.js';
+import { ServiceProvider, AgentWallet } from '../packages/sdk/src/index.js';
 
 const log = createLogger({ name: 'e2e-fiber', version: '0.1.0' });
 
@@ -181,7 +181,7 @@ async function main() {
   // ─── Test 8: x402 Facilitator Hold Scheme ──────────────
   try {
     log.info('Test 8: x402 Facilitator — Hold scheme lifecycle...');
-    const { X402Facilitator } = await import('@agentpay/x402-facilitator');
+    const { X402Facilitator } = await import('../packages/x402-facilitator/src/index.js');
     const facilitator = new X402Facilitator({
       fiberRpcUrl: FIBER_RPC_URL,
       currency: 'Fibt',

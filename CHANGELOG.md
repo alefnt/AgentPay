@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-03-14
+
+### Added
+- **Hold Payment Scheme** (`hold` | `exact` | `upto`) — AgentPay's core differentiator
+  - `createHoldRequirements()` — lock funds via Fiber PTLC
+  - `settleHold(hash, preimage)` — provider reveals preimage to collect
+  - `cancelHold(hash)` — refund locked funds to client
+  - HTTP endpoints: `/x402/create-hold`, `/x402/settle-hold`, `/x402/cancel-hold`
+  - `verify()` now supports both `exact` and `hold` schemes
+- **AI Agent Skills** (`.agent/skills/`)
+  - `agentpay-payment/SKILL.md` — how to pay another Agent
+  - `agentpay-provider/SKILL.md` — how to create a paid service
+- **One-click Fiber node setup** (`pnpm setup` / `scripts/setup-node.ts`)
+- **Fiber node guide** (`docs/fiber-node-guide.md`)
+- **Deploy workflow** (`.agent/workflows/deploy-local.md`)
+- **E2E tests** — hold scheme lifecycle + LND sync monitor
+
+### Changed
+- **Architecture**: Fiber-first with fallbacks (was: pluggable settlement)
+- **PTLC correction**: Fiber uses PTLC per official spec (was HTLC)
+- **architecture.md**: 6 access methods, payment schemes, updated status
+- **README**: Architecture diagram with 6 access paths + PTLC label
+
+### Fixed
+- LND config: removed invalid `neutrino.feeurl`, added multiple signet peers
+
 ## [0.1.0] - 2026-03-14
 
 ### Added
@@ -20,11 +46,10 @@ All notable changes to this project will be documented in this file.
 - ServiceProvider: HTTP server for receiving paid requests
 - HubClient: managed Fiber access (no node required)
 - Hold Invoice trustless payment flow
-- Input validation, body size limits, CORS, health endpoint
 - 17 unit tests
 
 #### Services
-- Hub Server: managed Fiber access, Agent registration, API key auth, rate limiting (13 tests)
+- Hub Server: managed Fiber access, Agent registration, API key auth (13 tests)
 - Registry Server: Agent service discovery, search by name/asset/price (17 tests)
 
 #### Ecosystem
@@ -36,8 +61,4 @@ All notable changes to this project will be documented in this file.
 - GitHub Actions CI/CD: test + build + Docker
 
 #### Documentation
-- Protocol specification (docs/protocol-spec.md)
-- Product documentation (docs/product.md)
-- Competitive analysis (docs/competitive-analysis.md)
-- Strategic positioning (docs/strategic-positioning.md)
-- Package READMEs (core, sdk, x402-facilitator)
+- Protocol specification, product docs, competitive analysis, strategic positioning
