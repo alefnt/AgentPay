@@ -3,13 +3,16 @@
 # Services:
 #   fiber-node-1:   Fiber Network node (Provider Agent) + Cch cross-chain hub
 #   fiber-node-2:   Fiber Network node (Caller Agent)
-#   lnd:            Lightning Network node (BTC testnet) for Cch
-#   bitcoind:       Bitcoin testnet node (LND backend)
+#   lnd:            Lightning Network node (BTC signet) for Cch
+#   bitcoind:       Bitcoin signet node (LND backend)
 #   provider-agent: Translation service Provider
 #   x402:           x402 Facilitator (bridges x402 ↔ Fiber)
 #
 # Usage:
 #   docker compose up -d
+#
+# Fiber-only (quick start):
+#   docker compose up fiber-node-1 -d
 #
 # BTC Lightning ↔ Fiber flow:
 #   BTC Agent (Lightning) → LND → Cch (fiber-node-1) → Fiber → CKB Agent
@@ -17,7 +20,7 @@
 version: '3.8'
 
 services:
-  # ─── Bitcoin Testnet Node ───────────────────────────────
+  # ─── Bitcoin Signet Node ────────────────────────────────
   bitcoind:
     image: btcpayserver/bitcoin:27.0
     container_name: agentpay-bitcoind
@@ -27,8 +30,8 @@ services:
       - bitcoind-data:/data
       - ./deploy/bitcoin.conf:/data/bitcoin.conf:ro
     ports:
-      - "18443:18443"   # RPC
-      - "38333:38333"   # P2P (signet)
+      - "18443:18443"
+      - "38333:38333"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "bitcoin-cli", "-signet", "getblockchaininfo"]
@@ -47,11 +50,9 @@ services:
       - lnd-data:/root/.lnd
       - ./deploy/lnd.conf:/root/.lnd/lnd.conf:ro
     ports:
-      - "9735:9735"     # P2P
-      - "10009:10009"   # gRPC
-      - "8080:8080"     # REST
-    environment:
-      - NETWORK=signet
+      - "9735:9735"
+      - "10009:10009"
+      - "8080:8080"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "lncli", "--network=signet", "getinfo"]
@@ -60,44 +61,40 @@ services:
       retries: 5
 
   # ─── Fiber Node 1 (Provider + Cch Hub) ─────────────────
+  # Uses official FNN v0.7.1 binary (same as video-platform)
   fiber-node-1:
-    image: nervosnetwork/fiber:latest
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.fiber
     container_name: agentpay-fiber-1
-    depends_on:
-      lnd:
-        condition: service_healthy
     ports:
       - "8227:8227"    # RPC
-      - "8119:8119"    # P2P
+      - "8228:8228"    # P2P
     volumes:
-      - fiber1-data:/data
-      - lnd-data:/lnd:ro    # Share LND certs/macaroons for Cch
-      - ./deploy/fiber-config-1.yml:/config.yml:ro
+      - fiber1-data:/app/data
     environment:
       - RUST_LOG=info
-      - CKB_RPC_URL=${CKB_RPC_URL:-https://testnet.ckb.dev}
-    command: ["fnn", "-c", "/config.yml"]
+      - FIBER_SECRET_KEY_PASSWORD=agentpay_dev_2025
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8227"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8227"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
   # ─── Fiber Node 2 (Caller) ──────────────────────────────
   fiber-node-2:
-    image: nervosnetwork/fiber:latest
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.fiber
     container_name: agentpay-fiber-2
     ports:
-      - "8228:8227"    # RPC (different host port)
-      - "8120:8119"    # P2P
+      - "8229:8227"    # RPC (different host port)
+      - "8230:8228"    # P2P
     volumes:
-      - fiber2-data:/data
-      - ./deploy/fiber-config-2.yml:/config.yml:ro
+      - fiber2-data:/app/data
     environment:
       - RUST_LOG=info
-      - CKB_RPC_URL=${CKB_RPC_URL:-https://testnet.ckb.dev}
-    command: ["fnn", "-c", "/config.yml"]
     restart: unless-stopped
 
   # ─── Provider Agent (Translation) ──────────────────────
