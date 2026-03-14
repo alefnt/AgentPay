@@ -1,0 +1,44 @@
+{
+  "name": "@agentpay/core",
+  "version": "0.1.0",
+  "description": "Core Fiber Network RPC client and protocol types for AgentPay — BTC-native Agent payment protocol",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "keywords": ["agentpay", "ckb", "fiber-network", "bitcoin", "agent", "payment", "lightning", "rpc", "x402", "rgb++"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AIIA-org/agentpay",
+    "directory": "packages/core"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0",
+    "rimraf": "^6.0.0"
+  },
+  "peerDependencies": {
+    "@rgbpp-sdk/btc": ">=0.5.0",
+    "@rgbpp-sdk/ckb": ">=0.5.0",
+    "@rgbpp-sdk/service": ">=0.5.0"
+  },
+  "peerDependenciesMeta": {
+    "@rgbpp-sdk/btc": { "optional": true },
+    "@rgbpp-sdk/ckb": { "optional": true },
+    "@rgbpp-sdk/service": { "optional": true }
+  }
+}

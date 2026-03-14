@@ -1,0 +1,92 @@
+# AgentPay — Docker Deployment
+#
+# Services:
+#   fiber-node-1:   Fiber Network node (Provider Agent)
+#   fiber-node-2:   Fiber Network node (Caller Agent)
+#   provider-agent: Translation service Provider
+#   x402:           x402 Facilitator (bridges x402 ↔ Fiber)
+#
+# Usage:
+#   docker compose up -d
+#
+# Prerequisites:
+#   - Build Fiber node binary (fnn) from https://github.com/nervosnetwork/fiber
+#   - Or use the official Docker image when available
+
+version: '3.8'
+
+services:
+  # ─── Fiber Node 1 (Provider) ────────────────────────────
+  fiber-node-1:
+    image: nervosnetwork/fiber:latest
+    container_name: agentpay-fiber-1
+    ports:
+      - "8227:8227"    # RPC
+      - "8119:8119"    # P2P
+    volumes:
+      - fiber1-data:/data
+      - ./deploy/fiber-config-1.yml:/config.yml:ro
+    environment:
+      - RUST_LOG=info
+      - CKB_RPC_URL=${CKB_RPC_URL:-https://testnet.ckb.dev}
+    command: ["fnn", "-c", "/config.yml"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8227"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ─── Fiber Node 2 (Caller) ──────────────────────────────
+  fiber-node-2:
+    image: nervosnetwork/fiber:latest
+    container_name: agentpay-fiber-2
+    ports:
+      - "8228:8227"    # RPC (different host port)
+      - "8120:8119"    # P2P
+    volumes:
+      - fiber2-data:/data
+      - ./deploy/fiber-config-2.yml:/config.yml:ro
+    environment:
+      - RUST_LOG=info
+      - CKB_RPC_URL=${CKB_RPC_URL:-https://testnet.ckb.dev}
+    command: ["fnn", "-c", "/config.yml"]
+    restart: unless-stopped
+
+  # ─── Provider Agent (Translation) ──────────────────────
+  provider-agent:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+      target: provider
+    container_name: agentpay-provider
+    ports:
+      - "3001:3001"
+    environment:
+      - FIBER_RPC_URL=http://fiber-node-1:8227
+      - PORT=3001
+    depends_on:
+      fiber-node-1:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─── x402 Facilitator ──────────────────────────────────
+  x402-facilitator:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+      target: x402
+    container_name: agentpay-x402
+    ports:
+      - "4020:4020"
+    environment:
+      - FIBER_RPC_URL=http://fiber-node-1:8227
+      - PORT=4020
+    depends_on:
+      fiber-node-1:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  fiber1-data:
+  fiber2-data:

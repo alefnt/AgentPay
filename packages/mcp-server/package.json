@@ -1,0 +1,27 @@
+{
+  "name": "@agentpay/mcp-server",
+  "version": "0.1.0",
+  "description": "MCP Server for AgentPay — Let Claude/GPT agents make payments",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "agentpay-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@agentpay/core": "workspace:*",
+    "@agentpay/sdk": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "tsx": "^4.0.0",
+    "rimraf": "^6.0.0",
+    "vitest": "^3.0.0"
+  }
+}

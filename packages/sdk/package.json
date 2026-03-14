@@ -1,0 +1,36 @@
+{
+  "name": "@agentpay/sdk",
+  "version": "0.1.0",
+  "description": "AgentPay SDK — Give your Agent a wallet in 3 lines of code",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "keywords": ["agentpay", "agent", "wallet", "payment", "ckb", "fiber-network", "bitcoin", "ai-agent", "sdk"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AIIA-org/agentpay",
+    "directory": "packages/sdk"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@agentpay/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0",
+    "rimraf": "^6.0.0"
+  }
+}

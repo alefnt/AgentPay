@@ -1,0 +1,16 @@
+{
+  "name": "@agentpay/example-translate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "provider": "tsx provider.ts",
+    "caller": "tsx caller.ts"
+  },
+  "dependencies": {
+    "@agentpay/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0"
+  }
+}

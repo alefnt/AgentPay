@@ -1,0 +1,16 @@
+# Fiber Node 2 Configuration (Caller Agent)
+
+[fiber]
+listening_port = 8119
+rpc_listening_addr = "0.0.0.0:8227"
+announce_listening_addr = true
+
+[ckb]
+rpc_url = "${CKB_RPC_URL}"
+udt_whitelist = []
+
+[store]
+path = "/data/fiber-2"
+
+[network]
+bootnode_addrs = []

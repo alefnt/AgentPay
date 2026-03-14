@@ -1,0 +1,29 @@
+{
+  "name": "agentpay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BTC Agent Payment Protocol powered by CKB Fiber Network + RGB++",
+  "author": "AIIA",
+  "license": "MIT",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "test": "pnpm -r test",
+    "e2e": "npx tsx scripts/e2e-fiber.ts",
+    "publish:dry": "npx tsx scripts/publish.ts",
+    "publish:real": "npx tsx scripts/publish.ts --real",
+    "lint": "pnpm -r lint",
+    "clean": "pnpm -r clean"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0"
+  },
+  "dependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^11.10.0"
+  }
+}

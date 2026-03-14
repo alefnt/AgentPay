@@ -1,0 +1,16 @@
+{
+  "name": "@agentpay/example-btc-ckb",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "demo": "tsx btc-to-ckb.ts"
+  },
+  "dependencies": {
+    "@agentpay/sdk": "workspace:*",
+    "@agentpay/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0"
+  }
+}

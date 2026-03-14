@@ -1,0 +1,20 @@
+# Fiber Node 1 Configuration (Provider Agent)
+# See: https://github.com/nervosnetwork/fiber
+
+[fiber]
+listening_port = 8119
+rpc_listening_addr = "0.0.0.0:8227"
+announce_listening_addr = true
+
+# CKB connection
+[ckb]
+rpc_url = "${CKB_RPC_URL}"
+udt_whitelist = []
+
+# Storage
+[store]
+path = "/data/fiber-1"
+
+# Network
+[network]
+bootnode_addrs = []
