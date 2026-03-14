@@ -9,6 +9,7 @@
     "build": "pnpm -r build",
     "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",
+    "setup": "npx tsx scripts/setup-node.ts",
     "e2e": "npx tsx scripts/e2e-fiber.ts",
     "publish:dry": "npx tsx scripts/publish.ts",
     "publish:real": "npx tsx scripts/publish.ts --real",
