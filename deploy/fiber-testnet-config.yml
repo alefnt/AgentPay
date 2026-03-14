@@ -63,3 +63,4 @@ services:
   - fiber
   - rpc
   - ckb
+  - cch
