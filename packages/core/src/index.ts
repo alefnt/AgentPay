@@ -5,6 +5,7 @@
  * - Fiber Network RPC client
  * - Agent identity utilities
  * - Asset registry (USDT, USDC, USDI, WBTC, etc.)
+ * - RGB++ Bridge (BTC↔CKB asset bridging)
  * - Protocol type definitions
  */
 
@@ -29,6 +30,16 @@ export {
   createCustomAsset,
 } from './assets.js';
 export type { AssetDefinition } from './assets.js';
+
+// RGB++ Bridge
+export { RgbppBridge, createRgbppBridge, RGBPP_SERVICE_URLS } from './rgbpp-bridge.js';
+export type {
+  RgbppBridgeConfig,
+  RgbppNetwork,
+  RgbppAssetBalance,
+  RgbppTxState,
+  LeapResult,
+} from './rgbpp-bridge.js';
 
 // Types — re-export everything
 export type {
@@ -73,3 +84,4 @@ export type {
   // Registration
   AgentRegistration,
 } from './types.js';
+

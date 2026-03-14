@@ -54,6 +54,8 @@ export interface WalletConfig {
   currency?: FiberCurrency;
   /** Private key hex for message signing (optional, for protocol auth) */
   signingKey?: string;
+  /** RGB++ Bridge config (optional, enables BTC↔CKB asset bridging) */
+  rgbpp?: import('@agentpay/core').RgbppBridgeConfig;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -79,6 +81,8 @@ export class AgentWallet {
   private currency: FiberCurrency;
   private signingKey: string;
   private _pubkey?: Pubkey;
+  private _rgbppConfig?: import('@agentpay/core').RgbppBridgeConfig;
+  private _rgbppBridge?: import('@agentpay/core').RgbppBridge;
 
   constructor(config?: WalletConfig) {
     this.fiber = new FiberRpcClient({
@@ -86,6 +90,7 @@ export class AgentWallet {
     });
     this.currency = config?.currency || 'Fibt';  // testnet default
     this.signingKey = config?.signingKey || '';
+    this._rgbppConfig = config?.rgbpp;
   }
 
   /**
@@ -104,6 +109,25 @@ export class AgentWallet {
    */
   get rpc(): FiberRpcClient {
     return this.fiber;
+  }
+
+  /**
+   * Get the RGB++ Bridge for BTC↔CKB asset bridging.
+   *
+   * Lazy-initialized on first access.
+   *
+   * ```ts
+   * const bridge = wallet.rgbppBridge();
+   * const assets = await bridge.getAssets('tb1q...');
+   * await bridge.leapToCkb({ ... }); // BTC → CKB
+   * ```
+   */
+  rgbppBridge(): import('@agentpay/core').RgbppBridge {
+    if (!this._rgbppBridge) {
+      const { RgbppBridge } = require('@agentpay/core');
+      this._rgbppBridge = new RgbppBridge(this._rgbppConfig);
+    }
+    return this._rgbppBridge!;
   }
 
   // ─────────────────────────────────────────────────────────
