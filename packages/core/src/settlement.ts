@@ -1,21 +1,28 @@
 /**
- * Settlement Layer Abstraction — Pluggable payment settlement
+ * Settlement Layer — Fiber-first with fallbacks
  *
- * AgentPay's core innovation (Hold Invoice) is settlement-layer agnostic.
- * This interface lets the same protocol work across:
+ * Fiber Network is ALWAYS the primary settlement layer.
+ * CKB L1 and Hub are fallbacks for specific scenarios:
  *
- *   - Fiber Network (PTLC channels, fastest, zero-fee, needs channel)
- *   - CKB L1 (on-chain cell escrow, simple, no channel needed)
- *   - Hub (managed/custodial, simplest, API key only)
+ *   - Fiber Network (PRIMARY) — PTLC channels, ~20ms, zero-fee, multi-asset
+ *   - Hub (ENTRY-LEVEL) — managed mode, no node needed, API key only
+ *   - CKB L1 (FALLBACK) — on-chain cell escrow, when Fiber is unavailable
  *
- * The auto-selector picks the best settlement based on:
- *   - Does the Agent have a Fiber channel? → use Fiber
- *   - Does the Agent have CKB balance? → use CKB L1
- *   - Fallback → use Hub (managed)
+ * Why Fiber is always primary:
+ *   - Only network with multi-asset channels (xUDT stablecoins)
+ *   - Only network targeting AI Agent + IoT micropayments
+ *   - PTLC > HTLC (better privacy)
+ *   - Millisecond settlement, zero fees
+ *
+ * When to use fallbacks:
+ *   - Hub: new users who don't want to run a Fiber node yet
+ *   - CKB L1: Fiber node is temporarily down, need on-chain guarantee
  *
  * ```ts
  * const wallet = new AgentWallet({
- *   settlement: 'auto',  // ← picks best available
+ *   fiberRpcUrl: 'http://127.0.0.1:8227',  // ← Primary: own Fiber node
+ *   // OR
+ *   hubUrl: 'https://hub.agentpay.dev',     // ← Fallback: managed mode
  * });
  * ```
  */

@@ -13,8 +13,13 @@
           ┌──────────────────────┼──────────────────────┐
           │                      │                      │
     ┌─────┴─────┐         ┌─────┴─────┐         ┌─────┴─────┐
-    │   MCP     │         │   SDK     │         │   SKILL   │
+    │   MCP     │         │   SDK     │         │  Skills   │
     │  Server   │         │  Direct   │         │   File    │
+    └─────┬─────┘         └─────┬─────┘         └─────┬─────┘
+          │                      │                      │
+    ┌─────┴─────┐         ┌─────┴─────┐         ┌─────┴─────┐
+    │   x402    │         │   Hub     │         │  Docker   │
+    │ Paywall   │         │  Managed  │         │ 1-Click   │
     └─────┬─────┘         └─────┬─────┘         └─────┬─────┘
           │                      │                      │
           └──────────────────────┼──────────────────────┘
@@ -81,7 +86,7 @@ Agent A (Caller)                          Agent B (Provider)
     │◀────────────────────────────────────────┤
     │                                         │
     │  3. PAY: send_payment(hold_invoice)      │
-    │  → Fiber locks $0.008 USDI in HTLC      │
+    │  → Fiber locks $0.008 USDI in PTLC       │
     │                                         │
     │  4. EXECUTE: Agent B translates          │
     │                                         │
@@ -160,19 +165,41 @@ services/hub            Managed mode: zero-infrastructure Fiber access
 services/registry       Discovery: find and compare Agent services
 ```
 
+## 6 Ways to Use AgentPay
+
+| # | Method | Who | Complexity |
+|---|---|---|---|
+| 1 | **Docker** | Developers | `pnpm setup` → 1 command |
+| 2 | **Hub** | Non-technical | API key, zero infra |
+| 3 | **SDK** | TypeScript devs | `npm install @agentpay/sdk` |
+| 4 | **MCP** | Claude/GPT users | JSON config |
+| 5 | **Skills** | AI coding assistants | Read `.agent/skills/` |
+| 6 | **x402** | HTTP services | 1-line middleware |
+
+## Payment Schemes
+
+| Scheme | Flow | Use Case |
+|---|---|---|
+| **hold** | Lock → work → settle/refund | Agent services (🔒 trustless) |
+| **exact** | Pay upfront | Simple purchases, x402 compat |
+| **upto** | Lock max → pay actual | Metered usage |
+
 ## What Works Today
 
 | Layer | Component | Status |
 |---|---|---|
 | **Core** | Fiber RPC client | ✅ 66 tests |
 | **Core** | Hold Invoice protocol | ✅ Code complete |
+| **Core** | Hold Scheme (verify/settle/cancel) | ✅ Complete |
 | **Core** | AgentWallet.payAndCall() | ✅ 17 tests |
 | **Core** | ServiceProvider | ✅ HTTP server |
 | **Core** | Hub (managed mode) | ✅ 23 tests |
 | **Core** | Service Registry | ✅ 27 tests |
 | **Core** | .bit DID identity | ✅ 4 tests |
 | **Core** | Docker (Fiber v0.7.1) | ✅ Running |
-| Extension | x402 Facilitator | ✅ 10 tests |
+| **Core** | One-click setup | ✅ `pnpm setup` |
+| **Core** | Skills (payment + provider) | ✅ Complete |
+| Extension | x402 Facilitator (exact + hold) | ✅ 10 tests |
 | Extension | AP2 Adapter | ✅ 7 tests |
 | Extension | RGB++ Bridge | ✅ 13 tests |
 | Extension | Cch (LND connected) | ✅ Verified |
@@ -181,7 +208,8 @@ services/registry       Discovery: find and compare Agent services
 
 ## What's Needed for Production
 
-1. **Fiber mainnet** — currently testnet only
-2. **USDI xUDT deployed** — needs real stablecoin on CKB
+1. **Fiber mainnet** — Q1 2026 (imminent!)
+2. **USDI xUDT deployed** — needs real stablecoin on CKB mainnet
 3. **Cch liquidity providers** — for BTC on/off ramp
 4. **Multi-hop routing** — Fiber payment routing between non-direct channels
+5. **End-to-end demo** — two Agent containers completing a real payment
