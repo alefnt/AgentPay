@@ -49,6 +49,22 @@ export type {
   BitIdentityConfig,
 } from './bit-identity.js';
 
+// Settlement Layer (pluggable: Fiber / CKB L1 / Hub)
+export {
+  FiberSettlement,
+  CkbL1Settlement,
+  HubSettlement,
+  autoSelectSettlement,
+} from './settlement.js';
+export type {
+  SettlementLayer,
+  SettlementLayerType,
+  SettlementCapabilities,
+  HoldInvoiceResult,
+  SettlementResult,
+  AutoSettlementConfig,
+} from './settlement.js';
+
 // Types — re-export everything
 export type {
   // CKB / Fiber native types

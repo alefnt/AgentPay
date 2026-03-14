@@ -198,7 +198,7 @@ BTC Lightning Network              CKB Fiber Network
               both fail (atomic)
 ```
 
-**How it works**: Both networks use HTLC (Hash Time-Locked Contracts). The Cch module locks funds on both sides with the **same hash** — either both payments complete, or both refund. No trust needed.
+**How it works**: Lightning uses HTLC (Hash Time-Locked Contracts), Fiber uses PTLC (Point Time-Locked Contracts — more private). The Cch module bridges between them using a shared hash — either both payments complete, or both refund. No trust needed.
 
 **Verification Status**:
 
