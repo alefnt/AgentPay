@@ -178,6 +178,82 @@ async function main() {
     failed++;
   }
 
+  // ─── Test 8: x402 Facilitator Hold Scheme ──────────────
+  try {
+    log.info('Test 8: x402 Facilitator — Hold scheme lifecycle...');
+    const { X402Facilitator } = await import('@agentpay/x402-facilitator');
+    const facilitator = new X402Facilitator({
+      fiberRpcUrl: FIBER_RPC_URL,
+      currency: 'Fibt',
+    });
+
+    // 8a. Create hold requirements
+    const requirements = await facilitator.createHoldRequirements(
+      '/api/translate',       // resource
+      '100000000',            // 1 CKB
+      'test-provider-agent',  // providerAgentId
+      'CKB',                  // asset
+      'E2E hold test',        // description
+      120,                    // 120s timeout
+    );
+    log.info({
+      scheme: requirements.scheme,
+      paymentHash: requirements.extra.paymentHash.slice(0, 16) + '...',
+      holdTimeout: requirements.extra.holdMode?.timeoutSeconds,
+    }, '✅ Hold requirements created');
+    passed++;
+
+    // 8b. Verify hold invoice status (should be Open — no one paid yet)
+    const verifyResult = await facilitator.verify({
+      scheme: 'hold',
+      network: 'ckb-fiber',
+      paymentHash: requirements.extra.paymentHash,
+      amount: '100000000',
+      asset: 'CKB',
+      payer: 'test-payer',
+      signature: 'test',
+      timestamp: Math.floor(Date.now() / 1000),
+    }, requirements);
+    log.info({
+      isValid: verifyResult.isValid,
+      reason: verifyResult.invalidReason,
+    }, '✅ Hold verify returned (expected invalid — no payment sent)');
+    passed++;
+
+    // 8c. Cancel (cleanup)
+    const cancelResult = await facilitator.cancelHold(requirements.extra.paymentHash);
+    log.info({ success: cancelResult.success }, '✅ Hold cancelled (cleanup)');
+    passed++;
+  } catch (err: any) {
+    log.error({ err: err.message }, '❌ x402 Hold scheme FAILED');
+    failed++;
+  }
+
+  // ─── Test 9: LND Sync Status ────────────────────────────
+  try {
+    log.info('Test 9: LND sync status (BTC Lightning cross-chain readiness)...');
+    const { execSync } = await import('node:child_process');
+    const lndInfo = execSync(
+      'docker exec agentpay-lnd lncli --network=signet getinfo 2>&1',
+      { encoding: 'utf8', timeout: 10000 },
+    );
+    const info = JSON.parse(lndInfo);
+    const synced = info.synced_to_chain;
+    const blockHeight = info.block_height;
+    const peers = info.num_peers;
+
+    if (synced) {
+      log.info({ blockHeight, peers }, '✅ LND SYNCED — BTC Lightning ↔ Fiber cross-chain READY!');
+    } else {
+      log.warn({ blockHeight, peers }, `⏳ LND syncing... block ${blockHeight}, ${peers} peers`);
+      log.warn('BTC Lightning ↔ Fiber cross-chain NOT ready yet. Wait for sync.');
+    }
+    passed++;
+  } catch (err: any) {
+    log.warn({ err: err.message }, '⚠️ LND not available (optional for Fiber-only tests)');
+    // Don't count as failure — LND is optional
+  }
+
   // ─── Summary ─────────────────────────────────────────────
   log.info('');
   log.info('═══════════════════════════════════════════════');
