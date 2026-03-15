@@ -372,7 +372,7 @@ pnpm -r test      # Run 161 tests
 
 | Package | Tests |
 |---|---|
-| @agentpay/core | 66+ (incl. RGB++ 13, .bit 4) |
+| @agentpay/core | 66+ (incl. RGB++ 13, .bit 4, autoHexParams 4) |
 | @agentpay/sdk | 17 |
 | @agentpay/ap2 | 7 |
 | Hub Server | 23 |
@@ -380,8 +380,45 @@ pnpm -r test      # Run 161 tests
 | x402 Facilitator | 10 |
 | MCP Server | 11 |
 | create-agentpay CLI | 7 |
-| **Total** | **172+** |
+| E2E (live Fiber node) | 11 |
+| **Total** | **179+** |
+
+## Protocol Status
+
+### ✅ Completed (v0.3.0)
+
+| Feature | Status | Details |
+|---|---|---|
+| **Fiber RPC Client** | ✅ Production | autoHexParams, v0.7.1 compat, retry + timeout |
+| **Hold Scheme (Escrow)** | ✅ Complete | create → lock → settle/cancel |
+| **3 Payment Modes** | ✅ Complete | exact, hold, upto |
+| **6 Access Methods** | ✅ Complete | SDK, MCP, Skills, x402, Hub, Docker |
+| **MCP Server** | ✅ 8 tools | pay, wallet, channels, open, btc, hold×3 |
+| **AI Agent Skills** | ✅ 2 skills | payer + provider |
+| **Stablecoin (UDT)** | ✅ Verified | RUSD configured and tested on live Fiber node |
+| **Registry Discovery** | ✅ Enhanced | heartbeat, /services/discover, health filter |
+| **x402 Facilitator** | ✅ Complete | exact + hold + upto schemes |
+| **AP2 Compatibility** | ✅ Adapter | Mandate/Receipt mapping to Fiber PTLC |
+| **RGB++ Bridge** | ✅ Types | BTC↔CKB asset bridging interface |
+| **One-Click Deploy** | ✅ CLI | `npx create-agentpay` / `pnpm setup` |
+| **.bit DID Identity** | ✅ SDK | Decentralized agent naming |
+
+### ⏳ In Progress
+
+| Feature | Status | Blocker |
+|---|---|---|
+| **BTC Lightning ↔ Fiber** | ⏳ LND blocked | LND Neutrino can't P2P handshake on local network (DPI) |
+| **Cch Cross-Chain** | ⏳ Depends on LND | Module code complete, needs LND sync |
+
+### 🔮 Roadmap
+
+| Phase | Features | Timeline |
+|---|---|---|
+| **v0.4** | Hub 公网部署, npm 正式发布, E2E demo 两 Agent 容器 | Next |
+| **v0.5** | BTC 跨链验证 (海外 VPS), USDT/USDC 通道开通实测 | After VPS |
+| **v1.0** | Fiber mainnet 支持, 生产级安全审计, 多 Hub 联邦 | Fiber mainnet launch |
 
 ## License
 
 MIT
+

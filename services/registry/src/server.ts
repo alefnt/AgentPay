@@ -96,6 +96,45 @@ const server = createServer(async (req, res) => {
       });
     }
 
+    // Heartbeat — agents periodically signal they're alive
+    if (path.match(/^\/agents\/[^/]+\/heartbeat$/) && req.method === 'POST') {
+      const pubkey = decodeURIComponent(path.split('/')[2]);
+      const agent = db.getAgent(pubkey);
+      if (!agent) return json(res, 404, { error: 'Agent not found' });
+      db.updateHeartbeat(pubkey);
+      return json(res, 200, { status: 'ok', pubkey, last_heartbeat: new Date().toISOString() });
+    }
+
+    // Discovery — find healthy agents offering a specific service
+    if (path === '/services/discover' && req.method === 'GET') {
+      const name = url.searchParams.get('name') || undefined;
+      const asset = url.searchParams.get('asset') || undefined;
+      const staleMinutes = parseInt(url.searchParams.get('stale_minutes') || '10');
+      const services = db.searchServices({ name, asset });
+
+      const now = Date.now();
+      const staleThreshold = now - staleMinutes * 60 * 1000;
+
+      const healthy = services.filter((s) => {
+        const agents = db.listAgents();
+        const agent = agents.find((a) => a.pubkey === s.agent_pubkey);
+        if (!agent) return false;
+        const hbTime = new Date(agent.last_heartbeat).getTime();
+        return hbTime > staleThreshold;
+      });
+
+      return json(res, 200, {
+        total: services.length,
+        healthy: healthy.length,
+        services: healthy.map((s) => ({
+          name: s.name,
+          description: s.description,
+          provider: { pubkey: s.agent_pubkey, name: s.agent_name, endpoint: s.agent_endpoint },
+          pricing: { model: s.pricing_model, amount: s.pricing_amount, asset: s.pricing_asset },
+        })),
+      });
+    }
+
     json(res, 404, { error: 'Not found' });
   } catch (err: any) {
     log.error({ err }, 'Request error');

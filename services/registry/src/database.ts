@@ -176,6 +176,13 @@ export class RegistryDatabase {
     return this.db.prepare(query).all(...params) as any[];
   }
 
+  updateHeartbeat(pubkey: string): boolean {
+    const result = this.db.prepare(
+      `UPDATE agents SET last_heartbeat = datetime('now') WHERE pubkey = ? AND status = 'active'`,
+    ).run(pubkey);
+    return result.changes > 0;
+  }
+
   deleteAgent(pubkey: string): boolean {
     const result = this.db.prepare(`UPDATE agents SET status = 'inactive' WHERE pubkey = ?`).run(pubkey);
     return result.changes > 0;

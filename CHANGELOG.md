@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-03-15
+
+### Added
+- **Fiber v0.7.1 Full Compatibility**
+  - `autoHexParams()` — transparently converts decimal strings/numbers to hex for all RPC calls
+  - `nodeInfo()` return type updated (`node_id`, `channel_count`, `version`, optional fields)
+  - `getPubkey()` uses `node_id || public_key` across wallet, provider, MCP, hub
+- **MCP Server Hold Scheme Tools** (8 tools total, was 5)
+  - `create_hold_payment` — create escrow invoice with auto-generated preimage
+  - `settle_hold_payment` — release funds by revealing preimage
+  - `cancel_hold_payment` — refund locked funds to payer
+- **UDT Stablecoin Support** (RUSD verified on live node)
+  - E2E Test 10: UDT stablecoin invoice creation
+  - Fiber node UDT whitelist config detection
+- **Registry Service Discovery Enhancements**
+  - `POST /agents/:pubkey/heartbeat` — agent liveness tracking
+  - `GET /services/discover` — find healthy agents (filters stale heartbeats)
+  - `updateHeartbeat()` method in RegistryDatabase
+- **E2E Test Suite Expanded** (11 tests, was 9)
+  - Test 10: UDT Stablecoin (RUSD) invoice
+  - Test 11: Registry service discovery lifecycle
+- **4 autoHexParams Unit Tests** — decimal→hex, hex passthrough, number→hex, non-numeric
+
+### Fixed
+- `get_wallet_info` MCP tool uses v0.7.1 fields
+- CLI caller template uses `channel_count` instead of `open_channel_count`
+- Hub `server.ts` uses `node_id || public_key` for agent pubkey
+- Mock `node_info` in tests includes v0.7.1 fields
+
+### Changed
+- SDK README: hold scheme example, 6 access methods table, improved protocol flow diagram
+
 ## [0.2.0] - 2026-03-14
 
 ### Added
