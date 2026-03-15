@@ -1,7 +1,7 @@
 {
-  "name": "@agentpay/ap2",
+  "name": "@agentpay-dev/ap2",
   "version": "0.1.0",
-  "description": "Google AP2 (Agent Payments Protocol) compatibility layer for AgentPay â€” maps AP2 Mandates to Fiber Hold Invoices",
+  "description": "Google AP2 (Agent Payments Protocol) compatibility layer for AgentPay â€?maps AP2 Mandates to Fiber Hold Invoices",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,7 +16,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@agentpay/core": "workspace:*"
+    "@agentpay-dev/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.4.0",

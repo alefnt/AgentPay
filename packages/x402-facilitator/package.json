@@ -1,7 +1,7 @@
 {
-  "name": "@agentpay/x402-facilitator",
+  "name": "@agentpay-dev/x402-facilitator",
   "version": "0.1.0",
-  "description": "x402 Facilitator for AgentPay â€” Bridge between x402 protocol and CKB Fiber Network",
+  "description": "x402 Facilitator for AgentPay â€?Bridge between x402 protocol and CKB Fiber Network",
   "type": "module",
   "main": "./dist/index.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@agentpay/core": "workspace:*"
+    "@agentpay-dev/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.5.0",

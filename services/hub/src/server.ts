@@ -2,15 +2,15 @@
  * AgentPay Hub Server
  *
  * Managed Fiber node access for Agents.
- * Agents connect with an API key — no need to run their own Fiber node.
+ * Agents connect with an API key �?no need to run their own Fiber node.
  *
  * Endpoints:
- *   POST   /api/agent/register    — Register new Agent, get API key
- *   GET    /api/agent/info        — Get Agent identity info
- *   GET    /api/agent/balance     — Get available balance
- *   POST   /api/pay-and-call      — Pay and call a Provider Agent
- *   GET    /api/transactions      — Transaction history
- *   GET    /health                — Health check
+ *   POST   /api/agent/register    �?Register new Agent, get API key
+ *   GET    /api/agent/info        �?Get Agent identity info
+ *   GET    /api/agent/balance     �?Get available balance
+ *   POST   /api/pay-and-call      �?Pay and call a Provider Agent
+ *   GET    /api/transactions      �?Transaction history
+ *   GET    /health                �?Health check
  *
  * Authentication: Bearer token in Authorization header
  *   Authorization: Bearer ap_test_...
@@ -21,25 +21,21 @@
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { FiberRpcClient, createLogger, type AssetType } from '@agentpay/core';
-import { AgentWallet } from '@agentpay/sdk';
+import { FiberRpcClient, createLogger, type AssetType } from '@agentpay-dev/core';
+import { AgentWallet } from '@agentpay-dev/sdk';
 import { HubDatabase, type AgentRecord } from './database.js';
 
 const log = createLogger({ name: 'hub', version: '0.1.0' });
 
-// ═══════════════════════════════════════════════════════════
-//  Config
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Config
+// ══════════════════════════════════════════════════════════�?
 const PORT = parseInt(process.env.HUB_PORT || '4000');
 const FIBER_RPC_URL = process.env.FIBER_RPC_URL || 'http://127.0.0.1:8227';
 const DB_PATH = process.env.HUB_DB_PATH || './hub.db';
 const RATE_LIMIT_PER_MINUTE = parseInt(process.env.RATE_LIMIT || '60');
 
-// ═══════════════════════════════════════════════════════════
-//  Hub Server
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Hub Server
+// ══════════════════════════════════════════════════════════�?
 export class HubServer {
   private db: HubDatabase;
   private wallet: AgentWallet;
@@ -160,7 +156,7 @@ export class HubServer {
     this.json(res, 201, {
       agent_id: agentId,
       api_key: apiKey,
-      message: 'Save your API key — it cannot be retrieved later.',
+      message: 'Save your API key �?it cannot be retrieved later.',
       usage: {
         header: `Authorization: Bearer ${apiKey}`,
         sdk: `createHubWallet({ hubUrl: 'http://localhost:${PORT}', apiKey: '${apiKey}' })`,
@@ -298,9 +294,7 @@ export class HubServer {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Main
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Main
+// ══════════════════════════════════════════════════════════�?
 const hub = new HubServer();
 hub.start();

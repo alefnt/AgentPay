@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * AgentPay — NPM Publish Script
+ * AgentPay �?NPM Publish Script
  *
  * Publishes all public packages to npm in the correct dependency order.
  *
@@ -14,9 +14,9 @@
  *   3. All tests pass
  *
  * Publish order (dependency-first):
- *   1. @agentpay/core (no deps)
- *   2. @agentpay/sdk (depends on core)
- *   3. @agentpay/x402-facilitator (depends on core)
+ *   1. @agentpay-dev/core (no deps)
+ *   2. @agentpay-dev/sdk (depends on core)
+ *   3. @agentpay-dev/x402-facilitator (depends on core)
  *   4. create-agentpay (depends on sdk)
  */
 
@@ -25,13 +25,13 @@ import { execSync } from 'node:child_process';
 const DRY_RUN = !process.argv.includes('--real');
 
 const PACKAGES = [
-  { name: '@agentpay/core', dir: 'packages/core' },
-  { name: '@agentpay/sdk', dir: 'packages/sdk' },
-  { name: '@agentpay/x402-facilitator', dir: 'packages/x402-facilitator' },
+  { name: '@agentpay-dev/core', dir: 'packages/core' },
+  { name: '@agentpay-dev/sdk', dir: 'packages/sdk' },
+  { name: '@agentpay-dev/x402-facilitator', dir: 'packages/x402-facilitator' },
   { name: 'create-agentpay', dir: 'packages/create-agentpay' },
 ];
 
-console.log(`\n═══ AgentPay NPM Publish ${DRY_RUN ? '(DRY RUN)' : '🚀 REAL'} ═══\n`);
+console.log(`\n══�?AgentPay NPM Publish ${DRY_RUN ? '(DRY RUN)' : '🚀 REAL'} ═══\n`);
 
 async function main() {
   // Step 1: Build
@@ -43,7 +43,7 @@ async function main() {
   try {
     execSync('pnpm -r test', { stdio: 'inherit', cwd: process.cwd() });
   } catch {
-    console.error('❌ Tests failed. Fix tests before publishing.');
+    console.error('�?Tests failed. Fix tests before publishing.');
     process.exit(1);
   }
 
@@ -57,14 +57,14 @@ async function main() {
 
     try {
       execSync(cmd, { stdio: 'inherit', cwd: pkg.dir });
-      console.log(`  ✅ ${pkg.name} ${DRY_RUN ? '(dry run OK)' : 'published!'}`);
+      console.log(`  �?${pkg.name} ${DRY_RUN ? '(dry run OK)' : 'published!'}`);
     } catch (err: any) {
-      console.error(`  ❌ ${pkg.name} failed: ${err.message}`);
+      console.error(`  �?${pkg.name} failed: ${err.message}`);
       if (!DRY_RUN) process.exit(1);
     }
   }
 
-  console.log(`\n═══ Done! ${DRY_RUN ? '(was dry run, use --real to publish)' : '🎉 All published!'} ═══\n`);
+  console.log(`\n══�?Done! ${DRY_RUN ? '(was dry run, use --real to publish)' : '🎉 All published!'} ═══\n`);
 }
 
 main();

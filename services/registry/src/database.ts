@@ -1,17 +1,15 @@
 /**
- * AgentPay Registry — Database Layer
+ * AgentPay Registry �?Database Layer
  *
  * Extracted from server.ts for testability.
  * SQLite storage for Agent service discovery.
  */
 
 import Database from 'better-sqlite3';
-import type { ServiceSpec } from '@agentpay/core';
+import type { ServiceSpec } from '@agentpay-dev/core';
 
-// ═══════════════════════════════════════════════════════════
-//  Types
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Types
+// ══════════════════════════════════════════════════════════�?
 export interface AgentRow {
   pubkey: string;
   name: string;
@@ -37,10 +35,8 @@ export interface ServiceRow {
   max_latency_ms: number;
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Database
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Database
+// ══════════════════════════════════════════════════════════�?
 export class RegistryDatabase {
   private db: Database.Database;
 

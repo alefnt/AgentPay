@@ -1,7 +1,7 @@
 {
   "name": "create-agentpay",
   "version": "0.1.0",
-  "description": "One-command AgentPay + Fiber node deployment â€” no development required",
+  "description": "One-command AgentPay + Fiber node deployment â€?no development required",
   "type": "module",
   "bin": {
     "create-agentpay": "./dist/cli.js"
@@ -12,7 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@agentpay/core": "workspace:*"
+    "@agentpay-dev/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.5.0",

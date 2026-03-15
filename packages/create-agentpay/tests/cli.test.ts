@@ -42,11 +42,11 @@ describe('create-agentpay Generator', () => {
       // Verify agent.ts content
       const agent = readFileSync(join(projectDir, 'agent.ts'), 'utf-8');
       expect(agent).toContain('ServiceProvider');
-      expect(agent).toContain("from '@agentpay/sdk'");
+      expect(agent).toContain("from '@agentpay-dev/sdk'");
 
       // Verify package.json
       const pkg = JSON.parse(readFileSync(join(projectDir, 'package.json'), 'utf-8'));
-      expect(pkg.dependencies['@agentpay/sdk']).toBe('latest');
+      expect(pkg.dependencies['@agentpay-dev/sdk']).toBe('latest');
 
       // Cleanup
       rmSync(projectDir, { recursive: true, force: true });
@@ -103,10 +103,10 @@ describe('Template Content Validation', () => {
     const pkg = {
       name: 'my-agent', version: '0.1.0', private: true, type: 'module',
       scripts: { start: 'tsx agent.ts' },
-      dependencies: { '@agentpay/sdk': 'latest' },
+      dependencies: { '@agentpay-dev/sdk': 'latest' },
     };
     expect(pkg.type).toBe('module');
-    expect(pkg.dependencies['@agentpay/sdk']).toBe('latest');
+    expect(pkg.dependencies['@agentpay-dev/sdk']).toBe('latest');
     expect(pkg.private).toBe(true);
   });
 });

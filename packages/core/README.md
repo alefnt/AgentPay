@@ -1,26 +1,26 @@
-# @agentpay/core
+# @agentpay-dev/core
 
 > Core library for the AgentPay BTC-native Agent payment protocol
 
 ## Features
 
-- **Fiber RPC Client** â€” Full JSON-RPC client for CKB Fiber Network (Channel, Invoice, Payment, Cch, Peer, Info, Graph modules)
-- **Production-hardened** â€” Request timeouts, retry with exponential backoff, input validation, structured error types
-- **Asset Registry** â€” CKB native + UDT assets (USDT, USDC, USDI, WBTC)
-- **Agent Identity** â€” Pubkey-based identity, payload signing/verification
-- **Structured Logger** â€” Zero-dependency pino-compatible JSON logger
-- **TypeScript** â€” Full type definitions for all Fiber Network types
+- **Fiber RPC Client** â€?Full JSON-RPC client for CKB Fiber Network (Channel, Invoice, Payment, Cch, Peer, Info, Graph modules)
+- **Production-hardened** â€?Request timeouts, retry with exponential backoff, input validation, structured error types
+- **Asset Registry** â€?CKB native + UDT assets (USDT, USDC, USDI, WBTC)
+- **Agent Identity** â€?Pubkey-based identity, payload signing/verification
+- **Structured Logger** â€?Zero-dependency pino-compatible JSON logger
+- **TypeScript** â€?Full type definitions for all Fiber Network types
 
 ## Install
 
 ```bash
-npm install @agentpay/core
+npm install @agentpay-dev/core
 ```
 
 ## Usage
 
 ```ts
-import { FiberRpcClient, createLogger, TESTNET_ASSETS } from '@agentpay/core';
+import { FiberRpcClient, createLogger, TESTNET_ASSETS } from '@agentpay-dev/core';
 
 // Fiber RPC
 const fiber = new FiberRpcClient({
@@ -57,9 +57,9 @@ log.info({ invoice: invoice_address }, 'Invoice created');
 
 ### Error Types
 
-- `FiberRpcError` â€” RPC-level errors from the Fiber node
-- `FiberTimeoutError` â€” Request timeout (configurable, default 30s)
-- `FiberValidationError` â€” Input validation failures
+- `FiberRpcError` â€?RPC-level errors from the Fiber node
+- `FiberTimeoutError` â€?Request timeout (configurable, default 30s)
+- `FiberValidationError` â€?Input validation failures
 
 ## License
 

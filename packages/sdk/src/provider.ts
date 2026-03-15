@@ -1,5 +1,5 @@
 /**
- * AgentPay SDK — Service Provider
+ * AgentPay SDK �?Service Provider
  *
  * Production-hardened HTTP server for receiving paid service requests.
  * Uses Fiber Hold Invoice for trustless payment guarantee.
@@ -14,7 +14,7 @@
  * - Preimage cleanup after use
  *
  * ```ts
- * import { ServiceProvider } from '@agentpay/sdk';
+ * import { ServiceProvider } from '@agentpay-dev/sdk';
  *
  * const provider = new ServiceProvider({
  *   services: [{
@@ -48,14 +48,12 @@ import {
   type TaskInputPayload,
   type TaskResultPayload,
   type ServiceSpec,
-} from '@agentpay/core';
+} from '@agentpay-dev/core';
 
 const log = createLogger({ name: 'provider', version: '0.1.0' });
 
-// ═══════════════════════════════════════════════════════════
-//  Config
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Config
+// ══════════════════════════════════════════════════════════�?
 export interface ProviderConfig {
   fiberRpcUrl?: string;
   currency?: FiberCurrency;
@@ -66,16 +64,12 @@ export interface ProviderConfig {
   cors?: boolean;
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Task Handler Type
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Task Handler Type
+// ══════════════════════════════════════════════════════════�?
 export type TaskHandler = (input: unknown) => Promise<unknown>;
 
-// ═══════════════════════════════════════════════════════════
-//  Pending Offer — tracks which service a specific offer is for
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Pending Offer �?tracks which service a specific offer is for
+// ══════════════════════════════════════════════════════════�?
 interface PendingOffer {
   offerId: string;
   serviceName: string;
@@ -84,10 +78,8 @@ interface PendingOffer {
   createdAt: number;
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Service Provider
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Service Provider
+// ══════════════════════════════════════════════════════════�?
 export class ServiceProvider {
   private fiber: FiberRpcClient;
   private currency: FiberCurrency;
@@ -96,7 +88,7 @@ export class ServiceProvider {
   private maxBodySize: number;
   private enableCors: boolean;
 
-  /** Pending offers indexed by payment_hash — tracks service + preimage */
+  /** Pending offers indexed by payment_hash �?tracks service + preimage */
   private pendingOffers: Map<string, PendingOffer> = new Map();
 
   private _pubkey?: Pubkey;
@@ -242,7 +234,7 @@ export class ServiceProvider {
    * 1. Find matching service by name
    * 2. Generate preimage + hash
    * 3. Create Hold Invoice (hash only, no preimage)
-   * 4. Store pending offer (maps payment_hash → service + preimage)
+   * 4. Store pending offer (maps payment_hash �?service + preimage)
    * 5. Return SERVICE_OFFER with Hold Invoice
    */
   private async handleServiceRequest(
@@ -277,7 +269,7 @@ export class ServiceProvider {
       expiry: 600,  // 10 minutes
     });
 
-    // Store pending offer — maps payment_hash to service name + preimage
+    // Store pending offer �?maps payment_hash to service name + preimage
     const offerId = randomUUID();
     this.pendingOffers.set(paymentHash, {
       offerId,
@@ -310,7 +302,7 @@ export class ServiceProvider {
 
   /**
    * Handle TASK_INPUT:
-   * 1. Look up pending offer by payment_hash → get service name + preimage
+   * 1. Look up pending offer by payment_hash �?get service name + preimage
    * 2. Route to correct handler by service name
    * 3. Execute the task handler
    * 4. Settle the Hold Invoice with preimage
@@ -329,7 +321,7 @@ export class ServiceProvider {
     // Normalize hash
     const cleanHash = payment_hash.replace(/^0x/, '');
 
-    // Look up pending offer by payment_hash → get service name + preimage
+    // Look up pending offer by payment_hash �?get service name + preimage
     const pending = this.pendingOffers.get(cleanHash);
     if (!pending) {
       throw new Error(`No pending offer found for payment_hash: ${cleanHash}. Offer may have expired.`);
@@ -355,7 +347,7 @@ export class ServiceProvider {
     try {
       output = await handler(input);
     } catch (err: any) {
-      // Task execution failed — cancel the invoice, don't charge the caller
+      // Task execution failed �?cancel the invoice, don't charge the caller
       try {
         await this.fiber.cancelInvoice({ payment_hash: prefixedHash });
       } catch { /* best effort */ }
@@ -364,7 +356,7 @@ export class ServiceProvider {
     }
     const executionTimeMs = Date.now() - startTime;
 
-    // Settle the Hold Invoice — releases locked funds to us
+    // Settle the Hold Invoice �?releases locked funds to us
     await this.fiber.settleInvoice({
       payment_hash: prefixedHash,
       payment_preimage: `0x${pending.preimage}`,

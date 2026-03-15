@@ -1,12 +1,12 @@
 /**
- * AP2 Package â€” Google Agent Payments Protocol compatibility for AgentPay
+ * AP2 Package â€?Google Agent Payments Protocol compatibility for AgentPay
  *
  * Maps AP2 Mandates (W3C Verifiable Credentials) to Fiber Hold Invoices.
  * Uses .bit DID for Agent identity.
  *
  * @example
  * ```ts
- * import { AP2Adapter, verifyVCSignature } from '@agentpay/ap2';
+ * import { AP2Adapter, verifyVCSignature } from '@agentpay-dev/ap2';
  *
  * const adapter = new AP2Adapter({
  *   agentDid: 'did:bit:my-agent.bit',

@@ -1,470 +1,253 @@
-# AgentPay — BTC-Native AI Agent Payment Protocol
+# AgentPay - BTC-Native AI Agent Payment Protocol
 
-> **Give every AI Agent a wallet. Let Agents pay each other for services — trustlessly.**
->
-> Powered by CKB [Fiber Network](https://github.com/nervosnetwork/fiber) + [RGB++](https://github.com/RGBPlusPlus/rgbpp-sdk) | x402 + [AP2](https://github.com/google-agentic-commerce/AP2) Compatible
+[![npm](https://img.shields.io/npm/v/@agentpay-dev/core?label=%40agentpay-dev%2Fcore)](https://www.npmjs.com/package/@agentpay-dev/core)
+[![npm](https://img.shields.io/npm/v/@agentpay-dev/sdk?label=%40agentpay-dev%2Fsdk)](https://www.npmjs.com/package/@agentpay-dev/sdk)
+[![npm](https://img.shields.io/npm/v/@agentpay-dev/mcp-server?label=MCP%20Server)](https://www.npmjs.com/package/@agentpay-dev/mcp-server)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.alefnt%2Fagentpay-blue)](https://registry.modelcontextprotocol.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
----
+> **Give every AI Agent a wallet. Let Agents pay each other - instantly, with zero fees.**
 
-## The Problem
+AgentPay is a **BTC-native payment protocol** designed for AI Agent economies. Built on [CKB Fiber Network](https://fiber.nervos.org/) (Lightning-compatible L2), it enables:
 
-AI Agents need to call other Agents' services (translation, inference, search, code review), but today:
-- ❌ No standard Agent-to-Agent payment protocol
-- ❌ Traditional payments (Stripe) can't handle high-frequency micropayments
-- ❌ ETH gas fees are too high for micropayment scenarios
-
-## The Solution
-
-AgentPay is the **first BTC-native payment protocol** designed for AI Agents:
-- ✅ Instant micropayments via CKB Fiber Network (millisecond settlement, < $0.001 fees)
-- ✅ **Hold Invoice** = trustless escrow (lock funds → complete task → unlock)
-- ✅ Multi-asset: CKB / BTC / USDT / USDC / custom xUDT
-- ✅ **RGB++ Bridge** — BTC ↔ CKB asset bridging
-- ✅ BTC Lightning interop via Cch module
-- ✅ x402 compatible (ETH Agents can participate)
-- ✅ MCP Server for Claude/GPT
-
-## Architecture
-
-> **Core = Fiber + Stablecoins. Extensions = Ecosystem On-ramps.**
-
-```
-                    AI Agents (Claude, GPT, Grok, Custom)
-                              │
-                   ┌──────────┼──────────┐
-                   MCP        SDK      Skills     ← AI Integration
-                   └──────────┼──────────┘
-                   ┌──────────┼──────────┐
-                   x402       Hub     Docker      ← Deployment
-                   └──────────┼──────────┘
-                              │
-                     AgentPay Protocol
-              (Hold Invoice + Stablecoin + PTLC)
-                              │
-              ╔═══════════════╧═══════════════╗
-              ║     CKB Fiber Network (L2)    ║  ← PRIMARY
-              ║                               ║  99% of payments
-              ║  USDI / USDT / USDC (xUDT)   ║  happen here
-              ║  PTLC · Zero fee · ~20ms · P2P║
-              ╚═══════════════╤═══════════════╝
-                              │
-           ┌──────┬───────────┼───────────┬──────┐
-           │      │           │           │      │
-         x402    Cch        RGB++       AP2    Fiat
-         ETH     BTC         BTC       Google  Future
-         agents  on/off     assets     agents  compliant
-                 ramp       bridge              on-ramp
-```
-
-> See [docs/architecture.md](docs/architecture.md) for the full layered architecture.
+- **Zero-gas micropayments** - Pay per API call, no minimum amount
+- **Hold Invoice escrow** - Lock funds until service delivery is confirmed
+- **BTC interoperability** - Cross-chain payments via Lightning Network
+- **MCP integration** - Let Claude/GPT agents make payments natively
 
 ## Quick Start
 
-> **⚡ No Fiber node installation required!** AgentPay provides 3 deployment modes, all with built-in Fiber support.
-
-### Option 1: Docker (Recommended)
-
-Fiber node is bundled in Docker — no separate installation needed:
+### Install
 
 ```bash
-npx create-agentpay my-agent --provider
-cd my-agent
-docker compose up -d    # Fiber node + Agent start automatically
+npm install @agentpay-dev/sdk @agentpay-dev/core
 ```
 
-### Option 2: Hub Managed Mode (Zero Infrastructure)
-
-Connect via AgentPay Hub — **no nodes to run at all**:
+### Create a Payment Agent
 
 ```typescript
-import { HubClient } from '@agentpay/sdk';
+import { AgentWallet } from '@agentpay-dev/sdk';
 
-// Hub manages the Fiber node for you
-const hub = new HubClient({
-  hubUrl: 'https://hub.agentpay.dev',
-  apiKey: process.env.AGENTPAY_API_KEY,
-});
+const wallet = new AgentWallet({ fiberRpcUrl: process.env.FIBER_RPC_URL });
 
-// Pay and call — same experience as running your own node
-const result = await hub.payAndCall(
+// Pay another agent for a service
+const result = await wallet.payAndCall(
   'https://translator-agent.example.com',
   'translate',
-  { text: 'Hello World', target: 'zh' },
+  { text: 'Hello World', target: 'zh' }
 );
 ```
 
-### Option 3: SDK Direct Integration
+### Scaffold a New Project
 
-**Caller Agent** (pay for services):
-```typescript
-import { AgentWallet } from '@agentpay/sdk';
-
-const wallet = new AgentWallet({
-  fiberRpcUrl: 'http://127.0.0.1:8227',  // Docker provides this
-});
-
-const result = await wallet.payAndCall(
-  'http://translator-agent:3001',
-  'translate',
-  { text: 'Hello World', target: 'zh' },
-  { maxBudget: '100000000', asset: 'CKB' }  // 1 CKB
-);
-console.log(result.output); // { translated: '你好世界' }
+```bash
+npx create-agentpay my-agent
+cd my-agent && npm install
 ```
 
-**Provider Agent** (sell services):
+## Architecture
+
+```
++-----------------------------------------------------+
+|                    Applications                      |
+|  AI Agents  |  DePIN Devices  |  API Marketplaces    |
++-----------------------------------------------------+
+|                   AgentPay SDK                       |
+|  AgentWallet  |  ServiceProvider  |  HubClient       |
++-----------------------------------------------------+
+|                   AgentPay Core                      |
+|  Settlement  |  Metering  |  DID  |  Assets          |
++-----------------------------------------------------+
+|              CKB Fiber Network (L2)                  |
+|  Payment Channels  |  Hold Invoice  |  HTLC Routing  |
++-----------------------------------------------------+
+|         CKB L1  +  BTC Lightning Network             |
+|    xUDT Assets  |  RGB++  |  Cross-chain (Cch)       |
++-----------------------------------------------------+
+```
+
+## Packages
+
+| Package | npm | Description |
+|---------|-----|-------------|
+| [`@agentpay-dev/core`](packages/core) | [![npm](https://img.shields.io/npm/v/@agentpay-dev/core)](https://www.npmjs.com/package/@agentpay-dev/core) | Protocol core: Fiber RPC, settlement, assets, DePIN metering |
+| [`@agentpay-dev/sdk`](packages/sdk) | [![npm](https://img.shields.io/npm/v/@agentpay-dev/sdk)](https://www.npmjs.com/package/@agentpay-dev/sdk) | Developer SDK: AgentWallet, ServiceProvider, HubClient |
+| [`@agentpay-dev/mcp-server`](packages/mcp-server) | [![npm](https://img.shields.io/npm/v/@agentpay-dev/mcp-server)](https://www.npmjs.com/package/@agentpay-dev/mcp-server) | MCP Server: 8 payment tools for Claude/GPT |
+| [`@agentpay-dev/x402-facilitator`](packages/x402-facilitator) | [![npm](https://img.shields.io/npm/v/@agentpay-dev/x402-facilitator)](https://www.npmjs.com/package/@agentpay-dev/x402-facilitator) | HTTP 402 payment middleware with Fiber settlement |
+| [`@agentpay-dev/ap2`](packages/ap2) | [![npm](https://img.shields.io/npm/v/@agentpay-dev/ap2)](https://www.npmjs.com/package/@agentpay-dev/ap2) | Google AP2 protocol bridge to Fiber |
+| [`create-agentpay`](packages/create-agentpay) | [![npm](https://img.shields.io/npm/v/create-agentpay)](https://www.npmjs.com/package/create-agentpay) | CLI scaffolding tool |
+
+## Key Features
+
+### Hold Invoice - Trustless Escrow
+
+The killer feature. Agent A locks payment, Agent B delivers, funds release only on confirmation:
+
 ```typescript
-import { ServiceProvider } from '@agentpay/sdk';
+import { ServiceProvider } from '@agentpay-dev/sdk';
 
 const provider = new ServiceProvider({
-  fiberRpcUrl: 'http://127.0.0.1:8227',
-  services: [{
-    name: 'translate',
-    pricing: { model: 'per-call', amount: '100000000', asset: 'CKB' },
-    input_schema: { text: 'string', target: 'string' },
-    output_schema: { translated: 'string' },
-    description: 'AI-powered translation',
-  }],
+  fiberRpcUrl: process.env.FIBER_RPC_URL,
+  services: {
+    translate: {
+      price: 100_000_000n,  // 1 CKB per request
+      handler: async (params) => {
+        const result = await doTranslation(params.text, params.target);
+        return { translation: result };
+      }
+    }
+  }
 });
 
-provider.onTask('translate', async (input) => {
-  const { text, target } = input as any;
-  return { translated: await myTranslateAPI(text, target) };
-});
-
-provider.listen(3001);
+// Hold flow: Lock -> Deliver -> Release (atomic)
+// If service fails, funds auto-refund via HTLC timeout
 ```
 
-### Option 4: MCP Tools (Claude/GPT)
+### MCP Server - AI-Native Payments
+
+Registered on the [official MCP Registry](https://registry.modelcontextprotocol.io/) as `io.github.alefnt/agentpay`.
+
+Add to Claude Desktop config:
 
 ```json
-// claude_desktop_config.json
 {
   "mcpServers": {
     "agentpay": {
       "command": "npx",
-      "args": ["agentpay-mcp"],
-      "env": { "FIBER_RPC_URL": "http://127.0.0.1:8227" }
+      "args": ["@agentpay-dev/mcp-server"],
+      "env": { "FIBER_RPC_URL": "http://localhost:8227" }
     }
   }
 }
 ```
 
-Then tell Claude: *"Use AgentPay to pay 1 CKB for translation service"*
+**8 MCP Tools:**
 
-### Option 5: AI Agent Skills (Any Framework)
+| Tool | Description |
+|------|-------------|
+| `get_balance` | Check wallet balance (CKB + xUDT) |
+| `send_payment` | Send a payment via Fiber invoice |
+| `create_invoice` | Generate a Fiber invoice to receive payment |
+| `pay_for_service` | Pay-and-call another agent's API |
+| `create_hold_invoice` | Create escrow payment (lock funds) |
+| `settle_hold` | Release held funds after service delivery |
+| `cancel_hold` | Cancel and refund held payment |
+| `list_channels` | View active payment channels |
 
-AgentPay provides pre-built **Skills** — self-contained instruction files that any AI Agent framework can load to gain payment abilities.
+### x402 HTTP Compatibility
 
-**3 Skills available:**
-
-| Skill | Path | Description |
-|---|---|---|
-| `agentpay` | `.agent/skills/agentpay/` | Combined — pay + sell + discover |
-| `agentpay-payment` | `.agent/skills/agentpay-payment/` | Payer — call paid services |
-| `agentpay-provider` | `.agent/skills/agentpay-provider/` | Provider — sell your services |
-
-**How to use:**
-
-1. **Copy the skills directory** into your AI project:
-```bash
-# Copy all 3 skills
-cp -r .agent/skills/agentpay* /your-project/.agent/skills/
-```
-
-2. **Tell your AI agent** to read the skill:
-```
-> Read the skill at .agent/skills/agentpay/SKILL.md and use it to pay
-> for a translation service at http://translate-bot:3001
-```
-
-3. The skill file teaches the AI agent to:
-   - Install `@agentpay/sdk`
-   - Create an `AgentWallet` or `ServiceProvider`
-   - Make payments using `wallet.payAndCall()`
-   - Handle errors and channel management
-
-**Skill files contain:**
-- Step-by-step instructions (AI-readable)
-- Complete TypeScript code examples
-- Payment scheme docs (hold/exact/upto)
-- Error handling patterns
-- Channel management commands
-- Cross-chain (BTC Lightning) instructions
-
-**Works with any AI framework** that supports skill/tool loading:
-- Gemini agents (`.agent/skills/`)
-- OpenAI assistants (as instruction files)
-- LangChain agents (as tool docs)
-- Custom frameworks (read SKILL.md as context)
-
-### RGB++ Asset Bridge
-
-Bridge BTC assets to CKB via RGB++ protocol for Fiber channel payments:
+Any HTTP API becomes a paid API with one middleware:
 
 ```typescript
-import { RgbppBridge } from '@agentpay/core';
+import { createX402Middleware } from '@agentpay-dev/x402-facilitator';
 
-const bridge = new RgbppBridge({
-  network: 'testnet',
-  serviceToken: process.env.RGBPP_SERVICE_TOKEN,
+const paywall = createX402Middleware({ price: '100000000' });
+
+http.createServer((req, res) => {
+  paywall(req, res, () => {
+    res.end(JSON.stringify({ data: 'premium content' }));
+  });
 });
-
-// Query RGB++ assets on a BTC address
-const assets = await bridge.getAssets('tb1q...');
-
-// Leap: BTC → CKB (bridge assets for Fiber payments)
-const leap = await bridge.leapToCkb({
-  btcUtxoTxId: '0x...', btcUtxoVout: 0,
-  xudtTypeArgs: '0x...', amount: '100000000',
-  toCkbAddress: 'ckt1q...', btcPrivateKey: 'key',
-});
-
-// Track Leap status
-const status = await bridge.getLeapStatus(leap.btcTxId);
+// Client: HTTP 402 -> pay Fiber invoice -> retry -> get content
 ```
 
-### BTC Lightning ↔ CKB Fiber (Cross-Chain Hub)
+### BTC Cross-Chain
 
-We are building the bridge between **BTC Lightning Network** and **CKB Fiber Network** using the Cch (Cross-Chain Hub) module:
-
-```
-BTC Lightning Network              CKB Fiber Network
-┌──────────────┐                   ┌──────────────┐
-│  BTC Agent   │                   │  CKB Agent   │
-│  (LND node)  │                   │  (Fiber node)│
-└──────┬───────┘                   └──────┬───────┘
-       │ Lightning HTLC                    │ Fiber PTLC
-       │                                   │
-       └───────────┐       ┌───────────────┘
-                   ▼       ▼
-              ┌──────────────┐
-              │  Cch Module  │
-              │ Atomic Swap  │
-              │ Same Hash H  │
-              └──────────────┘
-              Both succeed or
-              both fail (atomic)
-```
-
-**How it works**: Lightning uses HTLC (Hash Time-Locked Contracts), Fiber uses PTLC (Point Time-Locked Contracts — more private, per official Fiber spec). The Cch module bridges between them: it translates HTLC↔PTLC via adaptor signatures, using a shared preimage for atomicity — either both payments complete, or both refund. No trust needed.
-
-**Verification Status**:
-
-| Component | Status | Evidence |
-|---|---|---|
-| Fiber Cch source code | ✅ Verified | `cch/config.rs`, `cch/actor.rs` in Fiber repo |
-| Cch RPC methods | ✅ Working | `send_btc` / `receive_btc` / `get_cch_order` respond |
-| Cch → LND gRPC | ✅ Connected | Log: `cch started successfully` |
-| Invoice parsing | ✅ Working | Returns validation error for test invoice (correct) |
-| Real cross-chain payment | 🔄 In progress | LND syncing signet via Neutrino |
-| Wrapped BTC xUDT | ⬜ Not yet | Needs CKB-side BTC representation |
-
-**Docker Quick Start** (full stack):
-```bash
-docker compose up lnd fiber-node-1 -d
-# LND (Neutrino signet) + Fiber (Cch connected to LND)
-```
-
-### Google AP2 Compatibility
-
-AgentPay is compatible with [Google's Agent Payments Protocol (AP2)](https://github.com/google-agentic-commerce/AP2):
+Pay with BTC, settle on CKB via Lightning-Fiber bridge:
 
 ```typescript
-import { AP2Adapter } from '@agentpay/ap2';
+import { CchClient } from '@agentpay-dev/core';
 
-const adapter = new AP2Adapter({
-  agentDid: 'did:bit:my-agent.bit',  // .bit DID identity
-  signingKeyHex: '...',
+const cch = new CchClient({ cchRpcUrl: process.env.CCH_RPC_URL });
+
+await cch.sendBtcToCkb({
+  btcPayReq: 'lnbc100n1p...',
+  fiberChannelId: '0x...',
 });
-
-// Create AP2 Intent Mandate (W3C Verifiable Credential)
-const mandate = await adapter.createIntentMandate({
-  intent: 'translate text to Chinese',
-  maxAmount: '1000000000',
-  currency: 'CKB',
-});
-
-// Process incoming AP2 mandate → Fiber Hold Invoice
-const request = adapter.processIntentMandate(incomingMandate);
 ```
 
-**AP2 Mandate ↔ Fiber Hold Invoice mapping**:
-- `IntentMandate` → Service Request
-- `PaymentMandate` → Hold Invoice (HTLC lock)
-- `Receipt` → Settled Invoice (preimage proof)
+## Ecosystem Integration
 
-### .bit Identity (CKB DID)
+AgentPay enhances existing payment solutions:
 
-Each Agent gets a decentralized identity via [.bit protocol](https://d.id):
-
-```typescript
-import { BitIdentity } from '@agentpay/core';
-
-const identity = new BitIdentity();
-
-// Resolve .bit name → CKB address
-const account = await identity.resolve('translator.bit');
-console.log(account?.did);  // "did:bit:translator.bit"
-
-// Auto-register .bit for your Agent
-const order = await identity.register('my-agent.bit', ckbAddress);
-```
-
-### Agent Skills
-
-AgentPay can be used as an **Agent Skill** by any AI framework:
-
-```
-.agent/skills/agentpay/SKILL.md
-```
-
-Any Agent that reads this skill file learns how to pay for services, sell services, and discover other Agents — no manual integration needed.
+| Platform | How AgentPay Helps |
+|----------|-------------------|
+| **x402 (Coinbase)** | Zero-gas Fiber settlement backend for HTTP 402 protocol |
+| **AP2 (Google)** | Settlement layer for agent authorization framework |
+| **Stripe** | Complements with agent-to-agent micropayments (sub-cent) |
+| **Lightning Network** | Cross-chain via Cch bridge, expanding BTC payment reach |
 
 ## Project Structure
 
 ```
-packages/
-├── core/                 # @agentpay/core — Fiber RPC + RGB++ + .bit Identity
-│   ├── src/
-│   │   ├── fiber-rpc.ts     # Full Fiber RPC (Channel/Invoice/Payment/Cch)
-│   │   ├── rgbpp-bridge.ts  # RGB++ Asset Bridge (Leap BTC↔CKB)
-│   │   ├── bit-identity.ts  # .bit DID (resolve/register/DID helpers)
-│   │   ├── types.ts         # Protocol types (matches Fiber spec)
-│   │   ├── assets.ts        # Asset registry (CKB/BTC/USDT/USDC/USDI/WBTC)
-│   │   ├── identity.ts      # Agent identity (= Fiber node pubkey)
-│   │   └── logger.ts        # Zero-dep structured logger
-│   └── tests/               # 66+ unit tests
-│
-├── sdk/                  # @agentpay/sdk — Developer SDK
-│   └── src/
-│       ├── wallet.ts        # AgentWallet — pay for services + RGB++ Bridge
-│       ├── provider.ts      # ServiceProvider — sell services (HTTP)
-│       └── hub-client.ts    # HubClient — managed mode (no Fiber node)
-│
-├── ap2/                  # @agentpay/ap2 — Google AP2 Compatibility
-│   └── src/
-│       ├── types.ts         # W3C VC Mandate types (IntentMandate/PaymentMandate/Receipt)
-│       ├── adapter.ts       # AP2 Mandate ↔ Fiber Hold Invoice adapter
-│       └── verify.ts        # Ed25519 VC signature verify/sign
-│
-├── mcp-server/           # @agentpay/mcp-server — Claude/GPT MCP Tools
-├── x402-facilitator/     # @agentpay/x402-facilitator — x402 Compatibility
-└── create-agentpay/      # create-agentpay — One-command project generator
-
-services/
-├── hub/                  # AgentPay Hub — Managed Fiber access
-└── registry/             # Agent service discovery
-
-deploy/
-├── Dockerfile.fiber       # Fiber v0.7.1 node (official binary)
-├── lnd.conf               # LND config (Neutrino signet)
-├── fiber-testnet-config.yml  # Fiber config + Cch cross-chain
-docker-compose.yml         # Full stack: LND + Fiber + Cch
+AgentPay/
+  packages/
+    core/               # Protocol core (Fiber RPC, settlement, DePIN)
+    sdk/                # Developer SDK (Wallet, Provider, Hub)
+    mcp-server/         # MCP Server for AI agents
+    x402-facilitator/   # HTTP 402 middleware
+    ap2/                # Google AP2 bridge
+    create-agentpay/    # CLI scaffolding
+  services/
+    hub/                # Hosted wallet service
+    registry/           # Agent discovery service
+  examples/
+    translate-agent/    # Translation service example
+    code-review-agent/  # Code review agent example
+    btc-to-ckb/         # Cross-chain payment example
+  docs/
+    product.md          # Product overview
+    architecture.md     # Technical architecture
 ```
 
-## Supported Assets
+## Documentation
 
-| Asset | Type | Status | Notes |
-|---|---|---|---|
-| CKB | Native | ✅ Ready | 1 CKB = 10^8 shannons |
-| BTC | Lightning/Cch | ✅ Ready | Cross-chain via Cch module |
-| USDI | xUDT | 🟡 CKB Native | CKB native stablecoin |
-| USDT | xUDT/RGB++ | 🟡 Pending | Available after Tether RGB++ deployment |
-| USDC | xUDT | 🔴 Future | No Circle CKB plans yet |
-| WBTC | xUDT/RGB++ | 🟡 Pending | Via RGB++ Leap |
-| Custom | xUDT | ✅ Ready | Any xUDT token |
+- [Product Overview](docs/product.md) - What AgentPay solves and how
+- [Architecture](docs/architecture.md) - Technical design and protocol layers
+- [Competitive Analysis](docs/competitive-analysis.md) - Comparison with x402, AP2, Stripe
 
-## Security Model
+## Tech Stack
 
-```
-Hold Invoice = Lock funds → Provider executes → Unlock with preimage
-
-1. Provider generates preimage + hash
-2. Provider creates Hold Invoice (has hash, NOT preimage)
-3. Caller pays Invoice → funds LOCKED on Fiber TLC
-4. Provider executes the task
-5. Provider reveals preimage → settle_invoice → funds RELEASED to Provider
-6. If Provider doesn't execute → Invoice expires → funds RETURN to Caller
-
-Result: Zero risk for both parties
-```
+- **Runtime**: Node.js 20+ / TypeScript 5.5+
+- **L2 Network**: [CKB Fiber Network](https://fiber.nervos.org/) (Lightning-compatible)
+- **L1 Blockchain**: [Nervos CKB](https://nervos.org/)
+- **Asset Standard**: xUDT (extensible User Defined Token)
+- **Identity**: [.bit](https://did.id/) decentralized identity
+- **Cross-chain**: Cch (CKB - BTC Lightning bridge)
+- **AI Integration**: [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
+- **Build**: pnpm workspace monorepo
 
 ## Development
 
 ```bash
-pnpm install      # Install dependencies
-pnpm -r build     # Build all packages
-pnpm -r test      # Run 161 tests
+git clone https://github.com/alefnt/AgentPay.git
+cd AgentPay
+pnpm install
+pnpm build
+pnpm test
 ```
-
-## Prerequisites
-
-- Node.js >= 20
-- pnpm >= 9
-
-> **No Fiber node installation needed.** Docker deployment bundles Fiber, Hub mode is fully managed.
 
 ## Roadmap
 
-- [x] **Phase 1**: Core SDK + Hold Invoice payments
-- [x] **Phase 2**: MCP Server + x402 Facilitator + Agent Skills
-- [x] **Phase 3**: RGB++ Bridge + Cch cross-chain verification
-- [x] **Phase 3.5**: AP2 compatibility + .bit DID identity
-- [ ] **Phase 4**: End-to-end BTC Lightning ↔ Fiber payment
-- [ ] **Phase 5**: Mainnet deployment + CKB Grant
-
-## Test Coverage
-
-| Package | Tests |
-|---|---|
-| @agentpay/core | 66+ (incl. RGB++ 13, .bit 4, autoHexParams 4) |
-| @agentpay/sdk | 17 |
-| @agentpay/ap2 | 7 |
-| Hub Server | 23 |
-| Registry Server | 27 |
-| x402 Facilitator | 10 |
-| MCP Server | 11 |
-| create-agentpay CLI | 7 |
-| E2E (live Fiber node) | 11 |
-| **Total** | **179+** |
-
-## Protocol Status
-
-### ✅ Completed (v0.3.0)
-
-| Feature | Status | Details |
-|---|---|---|
-| **Fiber RPC Client** | ✅ Production | autoHexParams, v0.7.1 compat, retry + timeout |
-| **Hold Scheme (Escrow)** | ✅ Complete | create → lock → settle/cancel |
-| **3 Payment Modes** | ✅ Complete | exact, hold, upto |
-| **6 Access Methods** | ✅ Complete | SDK, MCP, Skills, x402, Hub, Docker |
-| **MCP Server** | ✅ 8 tools | pay, wallet, channels, open, btc, hold×3 |
-| **AI Agent Skills** | ✅ 2 skills | payer + provider |
-| **Stablecoin (UDT)** | ✅ Verified | RUSD configured and tested on live Fiber node |
-| **Registry Discovery** | ✅ Enhanced | heartbeat, /services/discover, health filter |
-| **x402 Facilitator** | ✅ Complete | exact + hold + upto schemes |
-| **AP2 Compatibility** | ✅ Adapter | Mandate/Receipt mapping to Fiber PTLC |
-| **RGB++ Bridge** | ✅ Types | BTC↔CKB asset bridging interface |
-| **One-Click Deploy** | ✅ CLI | `npx create-agentpay` / `pnpm setup` |
-| **.bit DID Identity** | ✅ SDK | Decentralized agent naming |
-
-### ⏳ In Progress
-
-| Feature | Status | Blocker |
-|---|---|---|
-| **BTC Lightning ↔ Fiber** | ⏳ LND blocked | LND Neutrino can't P2P handshake on local network (DPI) |
-| **Cch Cross-Chain** | ⏳ Depends on LND | Module code complete, needs LND sync |
-
-### 🔮 Roadmap
-
-| Phase | Features | Timeline |
-|---|---|---|
-| **v0.4** | Hub 公网部署, npm 正式发布, E2E demo 两 Agent 容器 | Next |
-| **v0.5** | BTC 跨链验证 (海外 VPS), USDT/USDC 通道开通实测 | After VPS |
-| **v1.0** | Fiber mainnet 支持, 生产级安全审计, 多 Hub 联邦 | Fiber mainnet launch |
+- [x] Core protocol (Fiber RPC, settlement, assets)
+- [x] SDK (AgentWallet, ServiceProvider, HubClient)
+- [x] MCP Server with 8 payment tools
+- [x] x402 HTTP 402 facilitator
+- [x] AP2 protocol bridge
+- [x] DePIN metering module
+- [x] BTC cross-chain (Cch + LND)
+- [x] RGB++ bridge integration
+- [x] npm packages published
+- [x] MCP Registry registration
+- [ ] Fiber mainnet deployment
+- [ ] Stablecoin (RUSD) support on CKB
+- [ ] Public demo site
+- [ ] Production Hub service
 
 ## License
 
-MIT
+MIT - see [LICENSE](LICENSE) for details.
 
+---
+
+**Built for the Agent Economy** - where AI agents autonomously discover, negotiate, and pay for services.

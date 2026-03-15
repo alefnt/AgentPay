@@ -1,5 +1,5 @@
 /**
- * @agentpay/sdk — Public API
+ * @agentpay-dev/sdk �?Public API
  *
  * Two main classes:
  * - AgentWallet: For Caller Agents (pay and call services)
@@ -7,12 +7,12 @@
  *
  * ```ts
  * // Caller
- * import { AgentWallet } from '@agentpay/sdk';
+ * import { AgentWallet } from '@agentpay-dev/sdk';
  * const wallet = new AgentWallet();
  * const result = await wallet.payAndCall('http://provider:3000', 'translate', { text: 'Hi' });
  *
  * // Provider
- * import { ServiceProvider } from '@agentpay/sdk';
+ * import { ServiceProvider } from '@agentpay-dev/sdk';
  * const provider = new ServiceProvider({ services: [...] });
  * provider.onTask('translate', async (input) => ({ translated: '你好' }));
  * provider.listen(3000);
@@ -39,4 +39,4 @@ export type {
   FiberChannel,
   PaymentResult,
   ProtocolMessage,
-} from '@agentpay/core';
+} from '@agentpay-dev/core';

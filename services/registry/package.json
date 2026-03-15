@@ -1,7 +1,7 @@
 {
-  "name": "@agentpay/registry",
+  "name": "@agentpay-dev/registry",
   "version": "0.1.0",
-  "description": "AgentPay Agent Registry â€” Service discovery for AI Agents",
+  "description": "AgentPay Agent Registry â€?Service discovery for AI Agents",
   "type": "module",
   "main": "./dist/server.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@agentpay/core": "workspace:*",
+    "@agentpay-dev/core": "workspace:*",
     "better-sqlite3": "^11.0.0"
   },
   "devDependencies": {

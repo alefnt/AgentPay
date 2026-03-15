@@ -1,5 +1,5 @@
 /**
- * Example: Provider Agent — Translation Service
+ * Example: Provider Agent �?Translation Service
  *
  * This Agent offers a translation service and receives CKB payments
  * via Fiber Network Hold Invoice.
@@ -11,7 +11,7 @@
  * Run: npx tsx provider.ts
  */
 
-import { ServiceProvider } from '@agentpay/sdk';
+import { ServiceProvider } from '@agentpay-dev/sdk';
 
 // ─── Create Provider ───────────────────────────────────────
 
@@ -56,14 +56,14 @@ const provider = new ServiceProvider({
 provider.onTask('translate', async (input: unknown) => {
   const { text, target } = input as { text: string; target: string };
 
-  console.log(`[Translate] "${text}" → ${target}`);
+  console.log(`[Translate] "${text}" �?${target}`);
 
   // In production: call actual translation API (DeepL, OpenAI, etc.)
   // For demo: simple mock translation
   const translations: Record<string, Record<string, string>> = {
-    zh: { 'Hello World': '你好世界', 'Good morning': '早上好' },
-    en: { '你好世界': 'Hello World', '早上好': 'Good morning' },
-    ja: { 'Hello World': 'こんにちは世界', 'Good morning': 'おはようございます' },
+    zh: { 'Hello World': '你好世界', 'Good morning': '早上�? },
+    en: { '你好世界': 'Hello World', '早上�?: 'Good morning' },
+    ja: { 'Hello World': 'こんにちは世�?, 'Good morning': 'おはようございま�? },
   };
 
   const translated = translations[target]?.[text] || `[${target}] ${text}`;
@@ -81,13 +81,5 @@ provider.listen(PORT);
 
 console.log(`
 ╔══════════════════════════════════════════════════╗
-║  AgentPay Translation Provider                   ║
-║                                                  ║
-║  Endpoints:                                      ║
-║    POST /agentpay/request  → SERVICE_OFFER       ║
-║    POST /agentpay/execute  → TASK_RESULT         ║
-║                                                  ║
-║  Pricing: 1 CKB per translation                  ║
-║  Fiber:   ${process.env.FIBER_RPC_URL || 'http://127.0.0.1:8227'}        ║
-╚══════════════════════════════════════════════════╝
+�? AgentPay Translation Provider                   �?�?                                                 �?�? Endpoints:                                      �?�?   POST /agentpay/request  �?SERVICE_OFFER       �?�?   POST /agentpay/execute  �?TASK_RESULT         �?�?                                                 �?�? Pricing: 1 CKB per translation                  �?�? Fiber:   ${process.env.FIBER_RPC_URL || 'http://127.0.0.1:8227'}        �?╚══════════════════════════════════════════════════╝
 `);

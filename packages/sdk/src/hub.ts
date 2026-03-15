@@ -10,7 +10,7 @@
  *            but MUCH easier to get started.
  *
  * ```ts
- * import { AgentWallet } from '@agentpay/sdk';
+ * import { AgentWallet } from '@agentpay-dev/sdk';
  *
  * // Option A: Self-hosted Fiber (full trustless)
  * const wallet = new AgentWallet({ fiberRpcUrl: 'http://localhost:8227' });
@@ -35,13 +35,11 @@ import {
   type Hash256,
   type AssetType,
   type FiberCurrency,
-} from '@agentpay/core';
+} from '@agentpay-dev/core';
 import { AgentWallet, type WalletConfig, type PayAndCallResult } from './wallet.js';
 
-// ═══════════════════════════════════════════════════════════
-//  Hub Config
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Hub Config
+// ══════════════════════════════════════════════════════════�?
 export interface HubConfig {
   /** AgentPay Hub URL (e.g. https://hub.agentpay.dev) */
   hubUrl: string;
@@ -51,12 +49,10 @@ export interface HubConfig {
   currency?: FiberCurrency;
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Hub Client
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Hub Client
+// ══════════════════════════════════════════════════════════�?
 /**
- * AgentPay Hub Client — managed Fiber node access.
+ * AgentPay Hub Client �?managed Fiber node access.
  *
  * The Hub runs Fiber nodes and exposes a simplified API.
  * Agents authenticate with an API key and the Hub handles
@@ -173,14 +169,12 @@ export class HubClient {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Factory: Add Hub mode to AgentWallet
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Factory: Add Hub mode to AgentWallet
+// ══════════════════════════════════════════════════════════�?
 /**
  * Create an AgentWallet that uses the Hub for Fiber access.
  *
- * This is the easiest way to get started — no Fiber node needed.
+ * This is the easiest way to get started �?no Fiber node needed.
  *
  * @example
  * ```ts

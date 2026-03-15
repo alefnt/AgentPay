@@ -29,13 +29,11 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 
-import { AgentWallet } from '@agentpay/sdk';
-import { formatAmount, getAssetDefinition } from '@agentpay/core';
+import { AgentWallet } from '@agentpay-dev/sdk';
+import { formatAmount, getAssetDefinition } from '@agentpay-dev/core';
 
-// ═══════════════════════════════════════════════════════════
-//  Initialize
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Initialize
+// ══════════════════════════════════════════════════════════�?
 const wallet = new AgentWallet({
   fiberRpcUrl: process.env.FIBER_RPC_URL || 'http://127.0.0.1:8227',
   currency: (process.env.FIBER_CURRENCY as any) || 'Fibt',
@@ -46,10 +44,8 @@ const server = new Server(
   { capabilities: { tools: {} } },
 );
 
-// ═══════════════════════════════════════════════════════════
-//  Tool Definitions
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Tool Definitions
+// ══════════════════════════════════════════════════════════�?
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
@@ -134,7 +130,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     {
       name: 'pay_btc_lightning',
       description:
-        'Pay a Bitcoin Lightning Network invoice through Fiber ↔ Lightning cross-chain hub.',
+        'Pay a Bitcoin Lightning Network invoice through Fiber �?Lightning cross-chain hub.',
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -206,10 +202,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
   ],
 }));
 
-// ═══════════════════════════════════════════════════════════
-//  Tool Handlers
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Tool Handlers
+// ══════════════════════════════════════════════════════════�?
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
@@ -415,10 +409,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════
-//  Start Server
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Start Server
+// ══════════════════════════════════════════════════════════�?
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);

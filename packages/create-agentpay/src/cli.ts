@@ -308,7 +308,7 @@ provider.onTask('${svc}', async (input: unknown) => {
  *   3. docker compose restart agent (重启生效)
  */
 
-import { ServiceProvider } from '@agentpay/sdk';
+import { ServiceProvider } from '@agentpay-dev/sdk';
 
 const provider = new ServiceProvider({
   fiberRpcUrl: process.env.FIBER_RPC_URL || 'http://127.0.0.1:8227',
@@ -362,7 +362,7 @@ function generateCallerAgent(config: Config): string {
  *   3. 修改 PROVIDER_URL 为目标 Agent 的地址
  */
 
-import { AgentWallet } from '@agentpay/sdk';
+import { AgentWallet } from '@agentpay-dev/sdk';
 
 const wallet = new AgentWallet({
   fiberRpcUrl: process.env.FIBER_RPC_URL || 'http://127.0.0.1:8227',
@@ -417,7 +417,7 @@ function generatePackageJson(config: Config): string {
       provider: 'tsx agent.ts',
     },
     dependencies: {
-      '@agentpay/sdk': 'latest',
+      '@agentpay-dev/sdk': 'latest',
     },
     devDependencies: {
       tsx: '^4.0.0',

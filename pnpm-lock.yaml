@@ -21,10 +21,10 @@ importers:
 
   examples/btc-to-ckb:
     dependencies:
-      '@agentpay/core':
+      '@agentpay-dev/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@agentpay/sdk':
+      '@agentpay-dev/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
     devDependencies:
@@ -34,7 +34,7 @@ importers:
 
   examples/code-review-agent:
     dependencies:
-      '@agentpay/sdk':
+      '@agentpay-dev/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
     devDependencies:
@@ -44,7 +44,7 @@ importers:
 
   examples/translate-agent:
     dependencies:
-      '@agentpay/sdk':
+      '@agentpay-dev/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
     devDependencies:
@@ -54,7 +54,7 @@ importers:
 
   packages/ap2:
     dependencies:
-      '@agentpay/core':
+      '@agentpay-dev/core':
         specifier: workspace:*
         version: link:../core
       tweetnacl:
@@ -92,7 +92,7 @@ importers:
 
   packages/create-agentpay:
     dependencies:
-      '@agentpay/core':
+      '@agentpay-dev/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -111,10 +111,10 @@ importers:
 
   packages/mcp-server:
     dependencies:
-      '@agentpay/core':
+      '@agentpay-dev/core':
         specifier: workspace:*
         version: link:../core
-      '@agentpay/sdk':
+      '@agentpay-dev/sdk':
         specifier: workspace:*
         version: link:../sdk
       '@modelcontextprotocol/sdk':
@@ -136,7 +136,7 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@agentpay/core':
+      '@agentpay-dev/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -152,7 +152,7 @@ importers:
 
   packages/x402-facilitator:
     dependencies:
-      '@agentpay/core':
+      '@agentpay-dev/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -171,10 +171,10 @@ importers:
 
   services/hub:
     dependencies:
-      '@agentpay/core':
+      '@agentpay-dev/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@agentpay/sdk':
+      '@agentpay-dev/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
       better-sqlite3:
@@ -199,7 +199,7 @@ importers:
 
   services/registry:
     dependencies:
-      '@agentpay/core':
+      '@agentpay-dev/core':
         specifier: workspace:*
         version: link:../../packages/core
       better-sqlite3:

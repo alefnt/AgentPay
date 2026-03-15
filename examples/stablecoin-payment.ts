@@ -1,10 +1,10 @@
 /**
- * AgentPay — Stablecoin Payment Demo
+ * AgentPay �?Stablecoin Payment Demo
  *
  * This demo shows the core use case:
  * Agent A pays Agent B with USDI (stablecoin) via Fiber Network.
  *
- * This is the PRIMARY payment flow — all Agent-to-Agent payments
+ * This is the PRIMARY payment flow �?all Agent-to-Agent payments
  * happen in stablecoins on Fiber. BTC/ETH are just on-ramp/off-ramp.
  *
  * Usage:
@@ -14,7 +14,7 @@
  *   docker compose up fiber-node-1 -d
  */
 
-import { AgentWallet, ServiceProvider } from '@agentpay/sdk';
+import { AgentWallet, ServiceProvider } from '@agentpay-dev/sdk';
 
 // ─── Provider Agent (sells translation service) ─────────
 
@@ -25,8 +25,8 @@ const provider = new ServiceProvider({
     description: 'AI-powered translation service',
     pricing: {
       model: 'per-call',
-      amount: '10000',     // $0.01 USDI (6 decimals → 10000 = 0.01)
-      asset: 'USDI',       // ← Stablecoin! Not CKB, not BTC
+      amount: '10000',     // $0.01 USDI (6 decimals �?10000 = 0.01)
+      asset: 'USDI',       // �?Stablecoin! Not CKB, not BTC
     },
     input_schema: { text: 'string', target: 'string' },
     output_schema: { translated: 'string' },
@@ -40,14 +40,14 @@ provider.onTask('translate', async (input) => {
 });
 
 provider.listen(3001);
-console.log('✅ Provider Agent listening on :3001 (USDI pricing)');
+console.log('�?Provider Agent listening on :3001 (USDI pricing)');
 
 // ─── Caller Agent (pays for translation) ─────────────────
 
 const wallet = new AgentWallet({
   fiberRpcUrl: 'http://127.0.0.1:8227',
-  defaultAsset: 'USDI',    // ← All payments default to stablecoin
-  bitAccount: 'caller.bit', // ← .bit DID identity
+  defaultAsset: 'USDI',    // �?All payments default to stablecoin
+  bitAccount: 'caller.bit', // �?.bit DID identity
 });
 
 async function main() {
@@ -60,7 +60,7 @@ async function main() {
     { maxBudget: '100000', asset: 'USDI' },  // max $0.10 USDI
   );
 
-  console.log('✅ Payment Result:');
+  console.log('�?Payment Result:');
   console.log(`   Output:  ${JSON.stringify(result.output)}`);
   console.log(`   Paid:    ${result.amount} (${result.asset})`);
   console.log(`   Hash:    ${result.payment_hash}`);

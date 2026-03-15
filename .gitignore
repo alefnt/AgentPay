@@ -7,3 +7,8 @@ dist/
 coverage/
 .DS_Store
 *.db
+
+# MCP Publisher
+**/.mcpregistry_*
+**/mcp-publisher.exe
+*.exe

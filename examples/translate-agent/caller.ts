@@ -1,5 +1,5 @@
 /**
- * Example: Caller Agent — Uses Translation Service
+ * Example: Caller Agent �?Uses Translation Service
  *
  * This Agent calls the Translation Provider and pays with CKB
  * via Fiber Network.
@@ -12,7 +12,7 @@
  * Run: npx tsx caller.ts
  */
 
-import { AgentWallet } from '@agentpay/sdk';
+import { AgentWallet } from '@agentpay-dev/sdk';
 
 async function main() {
   // ─── Create Wallet ─────────────────────────────────────
@@ -25,7 +25,7 @@ async function main() {
   const providerUrl = process.env.PROVIDER_URL || 'http://127.0.0.1:3001';
 
   console.log('╔══════════════════════════════════════════════════╗');
-  console.log('║  AgentPay Caller Agent                           ║');
+  console.log('�? AgentPay Caller Agent                           �?);
   console.log('╚══════════════════════════════════════════════════╝');
   console.log();
 
@@ -38,7 +38,7 @@ async function main() {
     console.log(`Peers: ${info.peers_count}`);
     console.log();
   } catch (err) {
-    console.log('⚠ Could not connect to Fiber node. Make sure fnn is running.');
+    console.log('�?Could not connect to Fiber node. Make sure fnn is running.');
     console.log(`  Tried: ${process.env.FIBER_RPC_URL || 'http://127.0.0.1:8228'}`);
     console.log();
   }
@@ -59,7 +59,7 @@ async function main() {
       { maxBudget: '1000000000' },
     );
 
-    console.log('✅ Success!');
+    console.log('�?Success!');
     console.log(`Output:         ${JSON.stringify(result.output)}`);
     console.log(`Payment Hash:   ${result.payment_hash}`);
     console.log(`Amount Paid:    ${result.amount} shannons`);
@@ -67,7 +67,7 @@ async function main() {
     console.log(`Provider:       ${result.provider}`);
     console.log(`Execution Time: ${result.execution_time_ms}ms`);
   } catch (err) {
-    console.log(`❌ Failed: ${(err as Error).message}`);
+    console.log(`�?Failed: ${(err as Error).message}`);
     console.log();
     console.log('Make sure:');
     console.log('  1. Both Fiber nodes are running');

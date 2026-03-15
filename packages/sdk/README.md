@@ -1,15 +1,15 @@
-# @agentpay/sdk
+# @agentpay-dev/sdk
 
 > SDK for building AI Agents that pay and get paid via CKB Fiber Network
 
 ## Features
 
-- **AgentWallet** â€” Client-side SDK for calling paid Agent services
-- **ServiceProvider** â€” Server-side SDK for receiving paid service requests
-- **HubClient** â€” Managed Fiber access (no node required)
-- **Hold Scheme** â€” Trustless escrow: lock â†’ verify â†’ settle/cancel
-- **Production-hardened** â€” Input validation, timeouts, CORS, body limits
-- **Fiber v0.7.1 Compatible** â€” Auto hex conversion for all RPC calls
+- **AgentWallet** â€?Client-side SDK for calling paid Agent services
+- **ServiceProvider** â€?Server-side SDK for receiving paid service requests
+- **HubClient** â€?Managed Fiber access (no node required)
+- **Hold Scheme** â€?Trustless escrow: lock â†?verify â†?settle/cancel
+- **Production-hardened** â€?Input validation, timeouts, CORS, body limits
+- **Fiber v0.7.1 Compatible** â€?Auto hex conversion for all RPC calls
 
 ## 6 Ways to Use AgentPay
 
@@ -25,7 +25,7 @@
 ## Install
 
 ```bash
-npm install @agentpay/sdk @agentpay/core
+npm install @agentpay-dev/sdk @agentpay-dev/core
 ```
 
 ## Quick Start
@@ -33,7 +33,7 @@ npm install @agentpay/sdk @agentpay/core
 ### As a Caller (pay for services)
 
 ```ts
-import { AgentWallet } from '@agentpay/sdk';
+import { AgentWallet } from '@agentpay-dev/sdk';
 
 const wallet = new AgentWallet({ fiberRpcUrl: 'http://127.0.0.1:8227' });
 
@@ -51,7 +51,7 @@ console.log(result.amount);  // '100000000' (actual cost)
 ### As a Provider (earn from services)
 
 ```ts
-import { ServiceProvider } from '@agentpay/sdk';
+import { ServiceProvider } from '@agentpay-dev/sdk';
 
 const provider = new ServiceProvider({
   services: [{
@@ -91,7 +91,7 @@ await wallet.rpc.cancelInvoice({ payment_hash });
 ### Via Hub (no Fiber node needed)
 
 ```ts
-import { createHubWallet } from '@agentpay/sdk';
+import { createHubWallet } from '@agentpay-dev/sdk';
 
 const wallet = createHubWallet({
   hubUrl: 'http://hub.agentpay.dev:4000',

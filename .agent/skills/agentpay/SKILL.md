@@ -33,7 +33,7 @@ curl -X POST http://hub.agentpay.dev:4000/api/agent/register \
 
 ```typescript
 // 2. Use in your Agent
-import { createHubWallet } from '@agentpay/sdk';
+import { createHubWallet } from '@agentpay-dev/sdk';
 
 const wallet = createHubWallet({
   hubUrl: 'http://hub.agentpay.dev:4000',
@@ -44,7 +44,7 @@ const wallet = createHubWallet({
 ### Option B: Direct Fiber Node
 
 ```typescript
-import { AgentWallet } from '@agentpay/sdk';
+import { AgentWallet } from '@agentpay-dev/sdk';
 
 const wallet = new AgentWallet({
   fiberRpcUrl: 'http://127.0.0.1:8227',
@@ -70,7 +70,7 @@ console.log(result.payment_hash);  // '0xaabb...' (proof of payment)
 ## How to Sell a Service
 
 ```typescript
-import { ServiceProvider } from '@agentpay/sdk';
+import { ServiceProvider } from '@agentpay-dev/sdk';
 
 const provider = new ServiceProvider({
   fiberRpcUrl: 'http://127.0.0.1:8227',
@@ -117,28 +117,28 @@ const result = await wallet.payAndCall(
 
 | Asset | Description | Status |
 |---|---|---|
-| CKB | Nervos native token (1 CKB = 10^8 shannons) | ‚úÖ Ready |
-| BTC | Bitcoin via Lightning ‚Üî Fiber (Cch module) | ‚úÖ Ready |
-| Custom UDT | Any xUDT token on CKB | ‚úÖ Ready |
-| USDT/USDC | Stablecoins via RGB++ | ‚è≥ Pending deployment |
+| CKB | Nervos native token (1 CKB = 10^8 shannons) | ‚ú?Ready |
+| BTC | Bitcoin via Lightning ‚Ü?Fiber (Cch module) | ‚ú?Ready |
+| Custom UDT | Any xUDT token on CKB | ‚ú?Ready |
+| USDT/USDC | Stablecoins via RGB++ | ‚è?Pending deployment |
 
 ## MCP Tools (for Claude/GPT)
 
 If your agent framework supports MCP (Model Context Protocol), use the built-in MCP server:
 
 ```bash
-npx @agentpay/mcp-server
+npx @agentpay-dev/mcp-server
 ```
 
 This exposes 8 tools:
-- `pay_and_call` ‚Äî Pay an Agent and call their service
-- `get_wallet_info` ‚Äî Get node status and pubkey
-- `list_channels` ‚Äî List payment channels
-- `open_channel` ‚Äî Open a new payment channel
-- `pay_btc_lightning` ‚Äî Send BTC via Lightning
-- `create_hold_payment` ‚Äî Create escrow invoice (lock funds)
-- `settle_hold_payment` ‚Äî Release funds to provider
-- `cancel_hold_payment` ‚Äî Refund locked funds to payer
+- `pay_and_call` ‚Ä?Pay an Agent and call their service
+- `get_wallet_info` ‚Ä?Get node status and pubkey
+- `list_channels` ‚Ä?List payment channels
+- `open_channel` ‚Ä?Open a new payment channel
+- `pay_btc_lightning` ‚Ä?Send BTC via Lightning
+- `create_hold_payment` ‚Ä?Create escrow invoice (lock funds)
+- `settle_hold_payment` ‚Ä?Release funds to provider
+- `cancel_hold_payment` ‚Ä?Refund locked funds to payer
 
 ## Environment Variables
 
@@ -153,9 +153,9 @@ This exposes 8 tools:
 AgentPay uses **Hold Invoices** for trustless payment:
 
 1. Provider creates invoice with `payment_hash` only (preimage NOT shared)
-2. Caller pays ‚Üí funds are **locked** on Fiber (not yet settled)
+2. Caller pays ‚Ü?funds are **locked** on Fiber (not yet settled)
 3. Provider executes the task
-4. Provider reveals `preimage` ‚Üí funds **settle** (released to provider)
-5. If task fails ‚Üí Provider cancels invoice ‚Üí funds **return** to caller
+4. Provider reveals `preimage` ‚Ü?funds **settle** (released to provider)
+5. If task fails ‚Ü?Provider cancels invoice ‚Ü?funds **return** to caller
 
 This ensures: **pay only if you receive the result**.

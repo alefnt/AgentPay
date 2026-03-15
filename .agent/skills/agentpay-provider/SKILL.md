@@ -18,7 +18,7 @@ Creates an HTTP server that:
 ## Quick Start
 
 ```typescript
-import { ServiceProvider } from '@agentpay/sdk';
+import { ServiceProvider } from '@agentpay-dev/sdk';
 
 // 1. Define your service
 const provider = new ServiceProvider({
@@ -41,8 +41,8 @@ provider.onTask('translate', async (input: any) => {
 
 // 3. Start server
 provider.listen(3000);
-// â†’ [AgentPay Provider] Listening on 0.0.0.0:3000
-// â†’ [AgentPay Provider] Services: translate (100000000 USDI)
+// â†?[AgentPay Provider] Listening on 0.0.0.0:3000
+// â†?[AgentPay Provider] Services: translate (100000000 USDI)
 ```
 
 ## Multiple Services
@@ -112,7 +112,7 @@ Your provider automatically exposes:
 For simpler HTTP services, use the x402 middleware:
 
 ```typescript
-import { createX402Middleware } from '@agentpay/x402-facilitator';
+import { createX402Middleware } from '@agentpay-dev/x402-facilitator';
 import { createServer } from 'http';
 
 const paywall = createX402Middleware({

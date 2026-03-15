@@ -1,11 +1,11 @@
 /**
- * AgentPay SDK — AgentWallet
+ * AgentPay SDK �?AgentWallet
  *
  * The main class for Agent developers.
  * Uses Fiber Network Hold Invoice for trustless service payments.
  *
  * ```ts
- * import { AgentWallet } from '@agentpay/sdk';
+ * import { AgentWallet } from '@agentpay-dev/sdk';
  *
  * const wallet = new AgentWallet({
  *   fiberRpcUrl: 'http://127.0.0.1:8227',
@@ -39,33 +39,29 @@ import {
   type TaskResultPayload,
   type ServiceSpec,
   type PaymentResult,
-} from '@agentpay/core';
+} from '@agentpay-dev/core';
 
 const log = createLogger({ name: 'wallet', version: '0.1.0' });
 
-// ═══════════════════════════════════════════════════════════
-//  Config
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Config
+// ══════════════════════════════════════════════════════════�?
 export interface WalletConfig {
   /** Fiber node RPC URL (default: http://127.0.0.1:8227) */
   fiberRpcUrl?: string;
   /** Currency for invoices */
   currency?: FiberCurrency;
-  /** Default payment asset (default: 'USDI' — stablecoin first) */
+  /** Default payment asset (default: 'USDI' �?stablecoin first) */
   defaultAsset?: AssetType;
   /** Agent's .bit account for DID identity (e.g. "my-agent.bit") */
   bitAccount?: string;
   /** Private key hex for message signing (optional, for protocol auth) */
   signingKey?: string;
   /** RGB++ Bridge config (optional, enables BTC↔CKB asset bridging) */
-  rgbpp?: import('@agentpay/core').RgbppBridgeConfig;
+  rgbpp?: import('@agentpay-dev/core').RgbppBridgeConfig;
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Result Types
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Result Types
+// ══════════════════════════════════════════════════════════�?
 export interface PayAndCallResult<T = unknown> {
   output: T;
   payment_hash: Hash256;
@@ -76,17 +72,15 @@ export interface PayAndCallResult<T = unknown> {
   execution_time_ms: number;
 }
 
-// ═══════════════════════════════════════════════════════════
-//  AgentWallet
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  AgentWallet
+// ══════════════════════════════════════════════════════════�?
 export class AgentWallet {
   private fiber: FiberRpcClient;
   private currency: FiberCurrency;
   private signingKey: string;
   private _pubkey?: Pubkey;
-  private _rgbppConfig?: import('@agentpay/core').RgbppBridgeConfig;
-  private _rgbppBridge?: import('@agentpay/core').RgbppBridge;
+  private _rgbppConfig?: import('@agentpay-dev/core').RgbppBridgeConfig;
+  private _rgbppBridge?: import('@agentpay-dev/core').RgbppBridge;
 
   constructor(config?: WalletConfig) {
     this.fiber = new FiberRpcClient({
@@ -123,12 +117,12 @@ export class AgentWallet {
    * ```ts
    * const bridge = wallet.rgbppBridge();
    * const assets = await bridge.getAssets('tb1q...');
-   * await bridge.leapToCkb({ ... }); // BTC → CKB
+   * await bridge.leapToCkb({ ... }); // BTC �?CKB
    * ```
    */
-  rgbppBridge(): import('@agentpay/core').RgbppBridge {
+  rgbppBridge(): import('@agentpay-dev/core').RgbppBridge {
     if (!this._rgbppBridge) {
-      const { RgbppBridge } = require('@agentpay/core');
+      const { RgbppBridge } = require('@agentpay-dev/core');
       this._rgbppBridge = new RgbppBridge(this._rgbppConfig);
     }
     return this._rgbppBridge!;
@@ -290,7 +284,7 @@ export class AgentWallet {
   // ─────────────────────────────────────────────────────────
 
   /**
-   * Pay a BTC Lightning invoice through Fiber → Cch → Lightning.
+   * Pay a BTC Lightning invoice through Fiber �?Cch �?Lightning.
    */
   async payBtcLightning(btcInvoice: string) {
     return this.fiber.sendBtc({

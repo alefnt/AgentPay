@@ -1,5 +1,5 @@
 /**
- * Example: BTC Lightning → CKB Fiber Cross-Chain Payment
+ * Example: BTC Lightning �?CKB Fiber Cross-Chain Payment
  *
  * Shows how a BTC-native Agent can pay a CKB Agent via Fiber's Cch module.
  *
@@ -13,12 +13,12 @@
  * Run: npx tsx btc-to-ckb.ts
  */
 
-import { AgentWallet } from '@agentpay/sdk';
-import { FiberRpcClient } from '@agentpay/core';
+import { AgentWallet } from '@agentpay-dev/sdk';
+import { FiberRpcClient } from '@agentpay-dev/core';
 
 async function main() {
   console.log('╔══════════════════════════════════════════════════╗');
-  console.log('║  BTC Lightning → CKB Fiber Cross-Chain Demo      ║');
+  console.log('�? BTC Lightning �?CKB Fiber Cross-Chain Demo      �?);
   console.log('╚══════════════════════════════════════════════════╝');
   console.log();
 
@@ -41,7 +41,7 @@ async function main() {
   console.log(`   Amount: ${invoice.amount} (1 CKB)`);
   console.log();
 
-  // Step 2: Cch Hub converts Fiber invoice → BTC Lightning invoice
+  // Step 2: Cch Hub converts Fiber invoice �?BTC Lightning invoice
   console.log('2. Cch Hub wraps as BTC Lightning invoice...');
   const cchOrder = await ckbAgent.rpc.receiveBtc({
     fiber_pay_req: invoice_address,
@@ -73,9 +73,9 @@ async function main() {
   console.log('   CKB Agent has received CKB via Fiber.');
   console.log();
 
-  // ─── Reverse: CKB Agent → BTC Lightning ──────────────
+  // ─── Reverse: CKB Agent �?BTC Lightning ──────────────
 
-  console.log('═══ Reverse Direction: CKB → BTC ═══');
+  console.log('══�?Reverse Direction: CKB �?BTC ══�?);
   console.log();
 
   // A CKB Agent can also pay BTC Lightning invoices
@@ -86,7 +86,7 @@ async function main() {
     console.log(`   Status: ${sendOrder.status}`);
     console.log(`   Amount: ${sendOrder.amount_sats} sats`);
   } catch (err) {
-    console.log(`   (Skipped — needs real BTC Lightning invoice)`);
+    console.log(`   (Skipped �?needs real BTC Lightning invoice)`);
   }
 }
 

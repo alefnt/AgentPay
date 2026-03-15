@@ -10,20 +10,20 @@ Use this skill when an AI agent needs to **pay another agent** for a service (tr
 
 AgentPay uses **Hold Invoice** (Fiber Network PTLC) to guarantee trustless payments:
 1. Provider locks funds with a Hold Invoice
-2. Client pays â†’ funds are **locked** (not transferred)
+2. Client pays â†?funds are **locked** (not transferred)
 3. Provider does the work
-4. Provider reveals preimage â†’ funds **settle** to provider
-5. If timeout â†’ funds automatically **refund** to client
+4. Provider reveals preimage â†?funds **settle** to provider
+5. If timeout â†?funds automatically **refund** to client
 
 ## Prerequisites
 
-- AgentPay SDK installed: `npm install @agentpay/sdk`
+- AgentPay SDK installed: `npm install @agentpay-dev/sdk`
 - A running Fiber node (or Hub API key for managed mode)
 
 ## How to Pay Another Agent
 
 ```typescript
-import { AgentWallet } from '@agentpay/sdk';
+import { AgentWallet } from '@agentpay-dev/sdk';
 
 // 1. Create wallet (connects to Fiber node or Hub)
 const wallet = new AgentWallet({
@@ -54,7 +54,7 @@ console.log(result.payment_hash); // Payment proof
 
 | Asset | Description | Use Case |
 |---|---|---|
-| `USDI` | USD stablecoin (xUDT) | Default â€” stable pricing |
+| `USDI` | USD stablecoin (xUDT) | Default â€?stable pricing |
 | `CKB` | Native CKB token | Channel deposits |
 | `BTC` | Bitcoin (via Cch/Lightning) | Cross-chain payments |
 | `USDT` | Tether (xUDT) | Alternative stablecoin |
@@ -63,9 +63,9 @@ console.log(result.payment_hash); // Payment proof
 
 | Scheme | Description |
 |---|---|
-| `hold` | ðŸ”’ Lock â†’ work â†’ settle or refund (default, trustless) |
+| `hold` | ðŸ”’ Lock â†?work â†?settle or refund (default, trustless) |
 | `exact` | Pay upfront (x402 compatible) |
-| `upto` | Lock max â†’ pay actual usage â†’ refund remainder |
+| `upto` | Lock max â†?pay actual usage â†?refund remainder |
 
 ## Error Handling
 
@@ -76,9 +76,9 @@ try {
   if (err.message.includes('exceeds max budget')) {
     // Provider's price is too high
   } else if (err.message.includes('Payment failed')) {
-    // Fiber channel issue â€” check balance/routing
+    // Fiber channel issue â€?check balance/routing
   } else if (err.message.includes('timed out')) {
-    // Provider didn't respond â€” funds auto-refunded
+    // Provider didn't respond â€?funds auto-refunded
   }
 }
 ```
@@ -103,6 +103,6 @@ await wallet.openChannel(
 ## Cross-Chain (BTC Lightning)
 
 ```typescript
-// Pay a BTC Lightning invoice through Fiber â†’ Cch â†’ Lightning
+// Pay a BTC Lightning invoice through Fiber â†?Cch â†?Lightning
 await wallet.payBtcLightning('lnbc...');
 ```

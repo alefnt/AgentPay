@@ -1,5 +1,5 @@
 /**
- * AgentPay â€” Structured Logger (zero-dependency)
+ * AgentPay â€?Structured Logger (zero-dependency)
  *
  * Production-grade JSON logger compatible with log collectors
  * (Datadog, ELK, CloudWatch). Outputs pino-compatible format.
@@ -12,7 +12,7 @@
  * - Optional child loggers with context
  *
  * Usage:
- *   import { createLogger } from '@agentpay/core';
+ *   import { createLogger } from '@agentpay-dev/core';
  *   const log = createLogger({ name: 'hub', version: '0.1.0' });
  *   log.info({ agentId: 'ag_123' }, 'Agent registered');
  *   log.error({ err }, 'Payment failed');

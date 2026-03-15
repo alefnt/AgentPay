@@ -10,7 +10,7 @@
  * Price:  2 CKB per review
  */
 
-import { ServiceProvider } from '@agentpay/sdk';
+import { ServiceProvider } from '@agentpay-dev/sdk';
 
 // ─── Code Review Logic ──────────────────────────────────
 
@@ -53,7 +53,7 @@ function reviewCode(code: string, language: string): {
       issues.push({ line: lineNum, severity: 'error', message: 'Use `const` or `let` instead of `var`', rule: 'no-var' });
     }
     if (trimmed.includes('eval(')) {
-      issues.push({ line: lineNum, severity: 'error', message: 'Avoid using eval() — security risk', rule: 'no-eval' });
+      issues.push({ line: lineNum, severity: 'error', message: 'Avoid using eval() �?security risk', rule: 'no-eval' });
     }
     if (trimmed.includes('==') && !trimmed.includes('===') && !trimmed.includes('!==')) {
       issues.push({ line: lineNum, severity: 'warning', message: 'Use strict equality (===)', rule: 'eqeqeq' });
@@ -124,17 +124,5 @@ provider.listen(PORT);
 
 console.log(`
 ╔══════════════════════════════════════════════════╗
-║  Code Review Agent                               ║
-║                                                  ║
-║  Service: code_review                            ║
-║  Price:   2 CKB per review                       ║
-║  Port:    ${PORT}                                  ║
-║                                                  ║
-║  Usage:                                          ║
-║    wallet.payAndCall(                             ║
-║      'http://localhost:${PORT}',                   ║
-║      'code_review',                              ║
-║      { code: '...', language: 'typescript' }     ║
-║    );                                            ║
-╚══════════════════════════════════════════════════╝
+�? Code Review Agent                               �?�?                                                 �?�? Service: code_review                            �?�? Price:   2 CKB per review                       �?�? Port:    ${PORT}                                  �?�?                                                 �?�? Usage:                                          �?�?   wallet.payAndCall(                             �?�?     'http://localhost:${PORT}',                   �?�?     'code_review',                              �?�?     { code: '...', language: 'typescript' }     �?�?   );                                            �?╚══════════════════════════════════════════════════╝
 `);

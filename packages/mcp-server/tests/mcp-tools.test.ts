@@ -9,10 +9,8 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { createServer, type Server as HttpServer } from 'node:http';
 
-// ═══════════════════════════════════════════════════════════
-//  Mock Fiber RPC for MCP tests
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Mock Fiber RPC for MCP tests
+// ══════════════════════════════════════════════════════════�?
 let mockFiber: HttpServer;
 let mockFiberPort: number;
 
@@ -72,13 +70,11 @@ beforeAll(async () => {
 
 afterAll(() => { mockFiber?.close(); });
 
-// ═══════════════════════════════════════════════════════════
-//  We test the MCP tools by importing AgentWallet directly
+// ══════════════════════════════════════════════════════════�?//  We test the MCP tools by importing AgentWallet directly
 //  (MCP server is a thin wrapper around wallet)
-// ═══════════════════════════════════════════════════════════
-
-import { AgentWallet } from '@agentpay/sdk';
-import { formatAmount, getAssetDefinition } from '@agentpay/core';
+// ══════════════════════════════════════════════════════════�?
+import { AgentWallet } from '@agentpay-dev/sdk';
+import { formatAmount, getAssetDefinition } from '@agentpay-dev/core';
 
 describe('MCP Tool: get_wallet_info', () => {
   it('should return node info with pubkey and channels', async () => {

@@ -1,5 +1,5 @@
 /**
- * AgentPay Hub — Database Layer
+ * AgentPay Hub �?Database Layer
  *
  * SQLite storage for:
  * - Agent registrations (API keys, pubkeys, metadata)
@@ -9,12 +9,10 @@
 
 import Database from 'better-sqlite3';
 import { randomBytes, createHash } from 'node:crypto';
-import type { AssetType } from '@agentpay/core';
+import type { AssetType } from '@agentpay-dev/core';
 
-// ═══════════════════════════════════════════════════════════
-//  Types
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Types
+// ══════════════════════════════════════════════════════════�?
 export interface AgentRecord {
   id: string;
   api_key_hash: string;
@@ -39,10 +37,8 @@ export interface TransactionRecord {
   completed_at: string | null;
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Database
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Database
+// ══════════════════════════════════════════════════════════�?
 export class HubDatabase {
   private db: Database.Database;
 
@@ -95,7 +91,7 @@ export class HubDatabase {
 
   /**
    * Register a new Agent and return the API key.
-   * The API key is returned only once — we store only the hash.
+   * The API key is returned only once �?we store only the hash.
    */
   registerAgent(name: string): { agentId: string; apiKey: string } {
     const agentId = `ag_${randomBytes(12).toString('hex')}`;

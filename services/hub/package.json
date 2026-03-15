@@ -1,7 +1,7 @@
 {
-  "name": "@agentpay/hub",
+  "name": "@agentpay-dev/hub",
   "version": "0.1.0",
-  "description": "AgentPay Hub Server â€” Managed Fiber node access for Agents",
+  "description": "AgentPay Hub Server â€?Managed Fiber node access for Agents",
   "type": "module",
   "main": "./dist/server.js",
   "scripts": {
@@ -11,8 +11,8 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@agentpay/core": "workspace:*",
-    "@agentpay/sdk": "workspace:*",
+    "@agentpay-dev/core": "workspace:*",
+    "@agentpay-dev/sdk": "workspace:*",
     "better-sqlite3": "^11.0.0"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 /**
- * @agentpay/core â€” Public API
+ * @agentpay-dev/core â€?Public API
  *
  * Core library for AgentPay protocol, providing:
  * - Fiber Network RPC client
@@ -65,7 +65,7 @@ export type {
   AutoSettlementConfig,
 } from './settlement.js';
 
-// Types â€” re-export everything
+// Types â€?re-export everything
 export type {
   // CKB / Fiber native types
   Script,
@@ -109,7 +109,7 @@ export type {
   AgentRegistration,
 } from './types.js';
 
-// DePIN â€” Decentralized Physical Infrastructure payments
+// DePIN â€?Decentralized Physical Infrastructure payments
 export type {
   DeviceType,
   ResourceUnit,

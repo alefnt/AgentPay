@@ -1,36 +1,32 @@
 /**
- * AgentPay Registry — Agent Service Discovery
+ * AgentPay Registry �?Agent Service Discovery
  *
  * HTTP API for Agent registration and service discovery.
  * Refactored to use extracted RegistryDatabase for testability.
  *
  * Endpoints:
- *   POST   /agents           — Register/update an Agent and its services
- *   GET    /agents           — List all Agents (with filters)
- *   GET    /agents/:pubkey   — Get a specific Agent's details
- *   GET    /services         — Search services across all Agents
- *   DELETE /agents/:pubkey   — Deregister an Agent
- *   GET    /health           — Health check
+ *   POST   /agents           �?Register/update an Agent and its services
+ *   GET    /agents           �?List all Agents (with filters)
+ *   GET    /agents/:pubkey   �?Get a specific Agent's details
+ *   GET    /services         �?Search services across all Agents
+ *   DELETE /agents/:pubkey   �?Deregister an Agent
+ *   GET    /health           �?Health check
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { createLogger } from '@agentpay/core';
+import { createLogger } from '@agentpay-dev/core';
 import { RegistryDatabase, type AgentRow, type ServiceRow } from './database.js';
 
 const log = createLogger({ name: 'registry', version: '0.1.0' });
 
-// ═══════════════════════════════════════════════════════════
-//  Config
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Config
+// ══════════════════════════════════════════════════════════�?
 const PORT = parseInt(process.env.REGISTRY_PORT || '4001');
 const DB_PATH = process.env.REGISTRY_DB || './registry.db';
 const db = new RegistryDatabase(DB_PATH);
 
-// ═══════════════════════════════════════════════════════════
-//  HTTP Server
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  HTTP Server
+// ══════════════════════════════════════════════════════════�?
 const MAX_BODY_SIZE = 1_048_576; // 1MB
 
 const server = createServer(async (req, res) => {
@@ -96,7 +92,7 @@ const server = createServer(async (req, res) => {
       });
     }
 
-    // Heartbeat — agents periodically signal they're alive
+    // Heartbeat �?agents periodically signal they're alive
     if (path.match(/^\/agents\/[^/]+\/heartbeat$/) && req.method === 'POST') {
       const pubkey = decodeURIComponent(path.split('/')[2]);
       const agent = db.getAgent(pubkey);
@@ -105,7 +101,7 @@ const server = createServer(async (req, res) => {
       return json(res, 200, { status: 'ok', pubkey, last_heartbeat: new Date().toISOString() });
     }
 
-    // Discovery — find healthy agents offering a specific service
+    // Discovery �?find healthy agents offering a specific service
     if (path === '/services/discover' && req.method === 'GET') {
       const name = url.searchParams.get('name') || undefined;
       const asset = url.searchParams.get('asset') || undefined;
@@ -142,10 +138,8 @@ const server = createServer(async (req, res) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════
-//  Helpers
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Helpers
+// ══════════════════════════════════════════════════════════�?
 function json(res: ServerResponse, status: number, data: unknown): void {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(data));
@@ -184,10 +178,8 @@ function formatAgent(agent: AgentRow & { services: ServiceRow[] }) {
   };
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Main
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Main
+// ══════════════════════════════════════════════════════════�?
 server.listen(PORT, () => {
   log.info({ port: PORT, dbPath: DB_PATH }, 'Registry Server started');
 });

@@ -1,7 +1,7 @@
 {
-  "name": "@agentpay/core",
+  "name": "@agentpay-dev/core",
   "version": "0.1.0",
-  "description": "Core Fiber Network RPC client and protocol types for AgentPay â€” BTC-native Agent payment protocol",
+  "description": "Core Fiber Network RPC client and protocol types for AgentPay â€?BTC-native Agent payment protocol",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

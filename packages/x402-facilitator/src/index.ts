@@ -1,41 +1,36 @@
 /**
- * AgentPay x402 Facilitator — CKB Fiber as x402 Settlement Layer
+ * AgentPay x402 Facilitator �?CKB Fiber as x402 Settlement Layer
  *
  * x402 协议的核心设计是 Facilitator 可插拔：
- *   - Coinbase 默认用 Base (EVM L2) 结算
- *   - 我们用 CKB Fiber Network 作为结算层
- *   - 结果: 更快 (毫秒 vs 2秒)，更便宜 (~0 vs $0.0001)
+ *   - Coinbase 默认�?Base (EVM L2) 结算
+ *   - 我们�?CKB Fiber Network 作为结算�? *   - 结果: 更快 (毫秒 vs 2�?，更便宜 (~0 vs $0.0001)
  *
  * 架构:
  *   x402 Client (ETH Agent)
- *       ↓ HTTP 402
+ *       �?HTTP 402
  *   x402 Server (任何 HTTP 服务)
- *       ↓ verify / settle
- *   AgentPay Facilitator (本服务)
- *       ↓ Fiber RPC
- *   CKB Fiber Network (结算层)
+ *       �?verify / settle
+ *   AgentPay Facilitator (本服�?
+ *       �?Fiber RPC
+ *   CKB Fiber Network (结算�?
  *
  * 使用方式 1: 独立服务
  *   FIBER_RPC_URL=http://127.0.0.1:8227 npx tsx src/server.ts
  *
- * 使用方式 2: 中间件 (集成到任何 HTTP 服务)
- *   import { createX402Middleware } from '@agentpay/x402-facilitator';
+ * 使用方式 2: 中间�?(集成到任�?HTTP 服务)
+ *   import { createX402Middleware } from '@agentpay-dev/x402-facilitator';
  *   app.use('/paid-api', createX402Middleware({ price: '100000000' }));
  *
- * 为什么 CKB/Fiber 可以做 x402 结算层:
- *   1. x402 规范支持自定义 scheme + network
- *   2. Facilitator 只需要实现 verify + settle 接口
- *   3. Fiber 的 Hold Invoice 比 EVM approve+transfer 更安全
- *   4. Fiber 结算速度: 毫秒 vs Base L2 的 2 秒
- */
+ * 为什�?CKB/Fiber 可以�?x402 结算�?
+ *   1. x402 规范支持自定�?scheme + network
+ *   2. Facilitator 只需要实�?verify + settle 接口
+ *   3. Fiber �?Hold Invoice �?EVM approve+transfer 更安�? *   4. Fiber 结算速度: 毫秒 vs Base L2 �?2 �? */
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { FiberRpcClient, resolveAssetScript, type AssetType, type Hash256, type FiberCurrency } from '@agentpay/core';
+import { FiberRpcClient, resolveAssetScript, type AssetType, type Hash256, type FiberCurrency } from '@agentpay-dev/core';
 
-// ═══════════════════════════════════════════════════════════
-//  x402 Types (compatible with Coinbase x402 spec)
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  x402 Types (compatible with Coinbase x402 spec)
+// ══════════════════════════════════════════════════════════�?
 /**
  * Payment requirements sent in HTTP 402 response.
  * The key difference from Coinbase's x402: we use Fiber invoices.
@@ -43,8 +38,8 @@ import { FiberRpcClient, resolveAssetScript, type AssetType, type Hash256, type 
 /**
  * Payment scheme types:
  *   - exact: Pay fixed amount upfront (same as Coinbase x402)
- *   - hold: Lock funds via PTLC → provider works → settle or refund (AgentPay unique)
- *   - upto: Lock max amount → pay actual usage → refund remainder
+ *   - hold: Lock funds via PTLC �?provider works �?settle or refund (AgentPay unique)
+ *   - upto: Lock max amount �?pay actual usage �?refund remainder
  */
 export type PaymentScheme = 'exact' | 'hold' | 'upto';
 
@@ -63,7 +58,7 @@ export interface PaymentRequirements {
     expiresAt: number;
     /** Hold-specific: preimage is held by provider until work is done */
     holdMode?: {
-      /** Timeout in seconds — auto-refund if provider doesn't settle */
+      /** Timeout in seconds �?auto-refund if provider doesn't settle */
       timeoutSeconds: number;
       /** Provider's agent ID (Fiber pubkey) */
       providerAgentId: string;
@@ -101,10 +96,8 @@ export interface SettleResult {
   error?: string;
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Facilitator Core
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Facilitator Core
+// ══════════════════════════════════════════════════════════�?
 export class X402Facilitator {
   private fiber: FiberRpcClient;
   private currency: FiberCurrency;
@@ -153,7 +146,7 @@ export class X402Facilitator {
   }
 
   /**
-   * Create HOLD payment requirements — AgentPay's unique scheme.
+   * Create HOLD payment requirements �?AgentPay's unique scheme.
    *
    * Unlike 'exact' (pay upfront, pray for delivery), 'hold' locks funds
    * via Fiber PTLC. Provider works, then settles with preimage to collect.
@@ -161,13 +154,13 @@ export class X402Facilitator {
    *
    * Flow:
    *   1. Provider creates Hold Invoice (preimage kept secret)
-   *   2. Client pays Hold Invoice → funds LOCKED (not transferred)
+   *   2. Client pays Hold Invoice �?funds LOCKED (not transferred)
    *   3. Provider does the work
-   *   4. Provider reveals preimage → funds SETTLED to provider
-   *   5. If timeout → funds automatically REFUNDED to client
+   *   4. Provider reveals preimage �?funds SETTLED to provider
+   *   5. If timeout �?funds automatically REFUNDED to client
    *
-   * x402 exact: Client pays $1 → Server takes $1 → Server maybe delivers
-   * AgentPay hold: Client locks $1 → Server works → Server earns $1 OR Client gets refund
+   * x402 exact: Client pays $1 �?Server takes $1 �?Server maybe delivers
+   * AgentPay hold: Client locks $1 �?Server works �?Server earns $1 OR Client gets refund
    */
   async createHoldRequirements(
     resource: string,
@@ -246,12 +239,12 @@ export class X402Facilitator {
           return { isValid: true };
         }
         if (invoiceStatus.status === 'Paid') {
-          return { isValid: true }; // Already settled — still valid
+          return { isValid: true }; // Already settled �?still valid
         }
         return { isValid: false, invalidReason: `Hold invoice status: ${invoiceStatus.status}` };
       }
 
-      // exact scheme — original logic
+      // exact scheme �?original logic
       if (invoiceStatus.status === 'Received' || invoiceStatus.status === 'Paid') {
         return { isValid: true };
       }
@@ -306,7 +299,7 @@ export class X402Facilitator {
   }
 
   /**
-   * Settle a HOLD payment — provider calls this after completing work.
+   * Settle a HOLD payment �?provider calls this after completing work.
    *
    * The preimage is the secret that releases locked funds to the provider.
    * This is the key difference from 'exact': funds don't move until
@@ -344,7 +337,7 @@ export class X402Facilitator {
   }
 
   /**
-   * Cancel a HOLD payment — refund locked funds to the client.
+   * Cancel a HOLD payment �?refund locked funds to the client.
    * Called when provider can't deliver or wants to reject.
    */
   async cancelHold(paymentHash: string): Promise<SettleResult> {
@@ -359,12 +352,11 @@ export class X402Facilitator {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
-//  x402 HTTP Middleware
+// ══════════════════════════════════════════════════════════�?//  x402 HTTP Middleware
 //
-//  让任何 HTTP 服务一行代码加入 x402 付费墙:
+//  让任�?HTTP 服务一行代码加�?x402 付费�?
 //
-//  import { createX402Middleware } from '@agentpay/x402-facilitator';
+//  import { createX402Middleware } from '@agentpay-dev/x402-facilitator';
 //
 //  // 保护你的 API
 //  const paywall = createX402Middleware({
@@ -378,8 +370,7 @@ export class X402Facilitator {
 //      res.end(JSON.stringify({ data: 'premium content' }));
 //    });
 //  });
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?
 export interface MiddlewareConfig {
   /** Price per request in shannons (CKB) or smallest unit */
   price: string;
@@ -397,10 +388,10 @@ type NextFn = () => void;
  * Create an x402 paywall middleware.
  *
  * Workflow:
- * 1. Client requests resource without payment → 402 + Fiber invoice
+ * 1. Client requests resource without payment �?402 + Fiber invoice
  * 2. Client pays Fiber invoice
  * 3. Client retries request with X-PAYMENT header
- * 4. Middleware verifies payment on Fiber → grants access
+ * 4. Middleware verifies payment on Fiber �?grants access
  */
 export function createX402Middleware(config: MiddlewareConfig) {
   const facilitator = config.facilitator || new X402Facilitator();
@@ -411,7 +402,7 @@ export function createX402Middleware(config: MiddlewareConfig) {
     const paymentHeader = req.headers['x-payment'] as string | undefined;
 
     if (!paymentHeader) {
-      // No payment — return 402 with Fiber invoice
+      // No payment �?return 402 with Fiber invoice
       const resource = `${req.headers.host}${req.url}`;
       const requirements = await facilitator.createPaymentRequirements(
         resource, config.price, asset, config.description,
@@ -434,7 +425,7 @@ export function createX402Middleware(config: MiddlewareConfig) {
       return;
     }
 
-    // Has payment header — verify
+    // Has payment header �?verify
     try {
       const payload: PaymentPayload = JSON.parse(
         Buffer.from(paymentHeader, 'base64').toString(),
@@ -462,7 +453,7 @@ export function createX402Middleware(config: MiddlewareConfig) {
         return;
       }
 
-      // Payment valid — grant access
+      // Payment valid �?grant access
       // Add payment info to request for downstream use
       (req as any).x402Payment = {
         paymentHash: payload.paymentHash,
@@ -479,10 +470,8 @@ export function createX402Middleware(config: MiddlewareConfig) {
   };
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Standalone Server
-// ═══════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════════════════════�?//  Standalone Server
+// ══════════════════════════════════════════════════════════�?
 export function startFacilitatorServer(port: number = 4020): void {
   const facilitator = new X402Facilitator();
 
@@ -511,9 +500,9 @@ export function startFacilitatorServer(port: number = 4020): void {
           schemes: [
             { scheme: 'exact', network: 'ckb-fiber', assets: ['CKB'], description: 'Pay fixed amount upfront (standard x402)' },
             { scheme: 'exact', network: 'ckb-fiber-udt', assets: ['USDI', 'USDT', 'USDC'], description: 'Pay fixed amount in stablecoin' },
-            { scheme: 'hold', network: 'ckb-fiber', assets: ['CKB'], description: '🔒 Lock funds → provider works → settle or auto-refund (AgentPay unique)' },
-            { scheme: 'hold', network: 'ckb-fiber-udt', assets: ['USDI', 'USDT', 'USDC'], description: '🔒 Lock stablecoin → provider works → settle or auto-refund' },
-            { scheme: 'upto', network: 'ckb-fiber-udt', assets: ['USDI'], description: 'Lock max → pay actual usage → refund remainder (metered)' },
+            { scheme: 'hold', network: 'ckb-fiber', assets: ['CKB'], description: '🔒 Lock funds �?provider works �?settle or auto-refund (AgentPay unique)' },
+            { scheme: 'hold', network: 'ckb-fiber-udt', assets: ['USDI', 'USDT', 'USDC'], description: '🔒 Lock stablecoin �?provider works �?settle or auto-refund' },
+            { scheme: 'upto', network: 'ckb-fiber-udt', assets: ['USDI'], description: 'Lock max �?pay actual usage �?refund remainder (metered)' },
           ],
         }));
         return;
@@ -586,20 +575,7 @@ export function startFacilitatorServer(port: number = 4020): void {
   server.listen(port, () => {
     console.log(`
 ╔══════════════════════════════════════════════════╗
-║  x402 Facilitator — CKB/Fiber Settlement Layer   ║
-║                                                  ║
-║  Port: ${port}                                    ║
-║  Settlement: CKB Fiber Network                   ║
-║                                                  ║
-║  vs Base L2:  ⚡ 毫秒结算 (vs 2秒)               ║
-║               💰 ~$0 费用 (vs $0.0001)            ║
-║               🔒 Hold Invoice (vs approve+tx)     ║
-║                                                  ║
-║  POST /x402/create-requirements                  ║
-║  POST /x402/verify                               ║
-║  POST /x402/settle                               ║
-║  GET  /x402/schemes                              ║
-╚══════════════════════════════════════════════════╝
+�? x402 Facilitator �?CKB/Fiber Settlement Layer   �?�?                                                 �?�? Port: ${port}                                    �?�? Settlement: CKB Fiber Network                   �?�?                                                 �?�? vs Base L2:  �?毫秒结算 (vs 2�?               �?�?              💰 ~$0 费用 (vs $0.0001)            �?�?              🔒 Hold Invoice (vs approve+tx)     �?�?                                                 �?�? POST /x402/create-requirements                  �?�? POST /x402/verify                               �?�? POST /x402/settle                               �?�? GET  /x402/schemes                              �?╚══════════════════════════════════════════════════╝
     `);
   });
 }
