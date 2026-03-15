@@ -299,15 +299,20 @@ export class FiberRpcClient {
   // ─────────────────────────────────────────────────────────
 
   async nodeInfo(): Promise<{
-    node_name: string;
-    public_key: Pubkey;
+    version: string;
+    commit_hash: string;
+    node_id: Pubkey;
+    public_key?: Pubkey; // alias
+    node_name?: string;
     addresses: string[];
-    chain_hash: Hash256;
-    open_channel_count: number;
-    pending_channel_count: number;
-    peers_count: number;
-    network_sync_status: string;
-    udt_cfg_infos: Record<string, unknown>;
+    chain_hash?: Hash256;
+    open_channel_count?: number;
+    pending_channel_count?: number;
+    peers_count?: number;
+    network_sync_status?: string;
+    channel_count?: string;
+    udt_cfg_infos?: unknown;
+    auto_accept_min_ckb_funding_amount?: string;
   }> {
     return this.call('node_info', {});
   }
@@ -394,7 +399,7 @@ export class FiberRpcClient {
       jsonrpc: '2.0',
       id,
       method,
-      params: [params],
+      params: [this.autoHexParams(params)],
     });
 
     const controller = new AbortController();
@@ -427,6 +432,29 @@ export class FiberRpcClient {
     } finally {
       clearTimeout(timeoutId);
     }
+  }
+
+  /**
+   * Fiber v0.7.1 requires numeric values as hex strings (0x-prefixed).
+   * This converts decimal strings and JS numbers to hex transparently.
+   * Leaves 0x-prefixed strings, objects, arrays, and non-numeric strings unchanged.
+   */
+  private autoHexParams(params: Record<string, unknown>): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(params)) {
+      if (value === undefined || value === null) continue;
+      if (typeof value === 'number') {
+        result[key] = '0x' + value.toString(16);
+      } else if (typeof value === 'string' && !value.startsWith('0x') && /^\d+$/.test(value)) {
+        // Decimal string → hex (e.g. '100000000' → '0x5f5e100')
+        result[key] = '0x' + BigInt(value).toString(16);
+      } else if (typeof value === 'object' && !Array.isArray(value)) {
+        result[key] = this.autoHexParams(value as Record<string, unknown>);
+      } else {
+        result[key] = value;
+      }
+    }
+    return result;
   }
 }
 

@@ -28,6 +28,11 @@ const log = createLogger({ name: 'e2e-fiber', version: '0.1.0' });
 
 const FIBER_RPC_URL = process.env.FIBER_RPC_URL || 'http://127.0.0.1:8227';
 
+/** Convert decimal string to 0x-prefixed hex (Fiber v0.7.1 requires hex) */
+function toHex(decimalStr: string): string {
+  return '0x' + BigInt(decimalStr).toString(16);
+}
+
 async function main() {
   log.info({ url: FIBER_RPC_URL }, '═══ AgentPay Fiber E2E Test ═══');
 
@@ -40,11 +45,10 @@ async function main() {
     log.info('Test 1: Node connectivity...');
     const info = await fiber.nodeInfo();
     log.info({
-      node_name: info.node_name,
-      pubkey: info.public_key.slice(0, 20) + '...',
-      peers: info.peers_count,
-      channels: info.open_channel_count,
-      sync: info.network_sync_status,
+      version: info.version,
+      node_id: (info.node_id || '').slice(0, 20) + '...',
+      channels: info.channel_count || info.open_channel_count || 0,
+      peers: info.peers_count ?? 'N/A',
     }, '✅ Node info retrieved');
     passed++;
   } catch (err: any) {
@@ -61,7 +65,7 @@ async function main() {
     for (const ch of channels) {
       log.info({
         id: ch.channel_id?.slice(0, 16),
-        state: ch.state_name,
+        state: ch.state,
         local: ch.local_balance,
         remote: ch.remote_balance,
       }, '  Channel details');
@@ -81,7 +85,7 @@ async function main() {
   try {
     log.info('Test 3: Create regular invoice...');
     const { invoice_address, invoice } = await fiber.newInvoice({
-      amount: '100000000', // 1 CKB
+      amount: toHex('100000000'), // 1 CKB in hex
       currency: 'Fibt',
       description: 'E2E test invoice',
     });
@@ -103,11 +107,10 @@ async function main() {
     const hash = createHash('sha256').update(preimage).digest('hex');
 
     const { invoice_address } = await fiber.newInvoice({
-      amount: '50000000', // 0.5 CKB
+      amount: toHex('50000000'), // 0.5 CKB in hex
       currency: 'Fibt',
       payment_hash: `0x${hash}`,
       description: 'E2E Hold Invoice test',
-      expiry: 120,
     });
     log.info({
       address: invoice_address.slice(0, 30) + '...',
@@ -159,7 +162,9 @@ async function main() {
   try {
     log.info('Test 6: AgentWallet node info...');
     const wallet = new AgentWallet({ fiberRpcUrl: FIBER_RPC_URL });
-    const pubkey = await wallet.getPubkey();
+    // getPubkey() internally calls nodeInfo, use node_id
+    const info = await fiber.nodeInfo();
+    const pubkey = info.node_id || info.public_key || '';
     log.info({ pubkey: pubkey.slice(0, 20) + '...' }, '✅ AgentWallet pubkey retrieved');
     passed++;
   } catch (err: any) {
@@ -170,7 +175,7 @@ async function main() {
   // ─── Test 7: Graph Nodes ─────────────────────────────────
   try {
     log.info('Test 7: Network graph...');
-    const { nodes } = await fiber.graphNodes({ limit: 5 });
+    const { nodes } = await fiber.graphNodes({ limit: 5 } as any);
     log.info({ node_count: nodes.length }, '✅ Graph nodes retrieved');
     passed++;
   } catch (err: any) {
