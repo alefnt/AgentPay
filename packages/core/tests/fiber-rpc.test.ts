@@ -19,6 +19,9 @@ function handleRpcRequest(method: string, params: any): any {
   switch (method) {
     case 'node_info':
       return {
+        version: '0.7.1',
+        commit_hash: '34c95d0 2026-02-25',
+        node_id: MOCK_PUBKEY,
         node_name: 'test-node',
         public_key: MOCK_PUBKEY,
         addresses: ['/ip4/127.0.0.1/tcp/8119/p2p/test'],
@@ -26,6 +29,7 @@ function handleRpcRequest(method: string, params: any): any {
         open_channel_count: 2,
         pending_channel_count: 0,
         peers_count: 3,
+        channel_count: '0x2',
         network_sync_status: 'Synced',
         udt_cfg_infos: {},
       };
@@ -201,11 +205,12 @@ describe('FiberRpcClient', () => {
 
   // ── Info Module ──
   describe('Info', () => {
-    it('should get node info', async () => {
+    it('should get node info with v0.7.1 fields', async () => {
       const info = await client.nodeInfo();
-      expect(info.public_key).toBe(MOCK_PUBKEY);
+      expect(info.node_id).toBe(MOCK_PUBKEY);
+      expect(info.version).toBe('0.7.1');
       expect(info.node_name).toBe('test-node');
-      expect(info.open_channel_count).toBe(2);
+      expect(info.channel_count).toBe('0x2');
       expect(info.peers_count).toBe(3);
     });
   });
@@ -355,6 +360,42 @@ describe('FiberRpcClient', () => {
     it('should throw on connection failure', async () => {
       const badClient = new FiberRpcClient({ rpcUrl: 'http://127.0.0.1:1' });
       await expect(badClient.nodeInfo()).rejects.toThrow();
+    });
+  });
+
+  // ── autoHexParams ──
+  describe('autoHexParams (transparent hex conversion)', () => {
+    it('should convert decimal strings to hex in RPC calls', async () => {
+      // newInvoice with decimal amount — autoHexParams should convert
+      const result = await client.newInvoice({
+        amount: '100000000',   // decimal, should become 0x5f5e100
+        currency: 'Fibt',
+        description: 'autoHex test',
+      });
+      expect(result.invoice_address).toContain('fibt1q');
+    });
+
+    it('should pass through 0x-prefixed strings unchanged', async () => {
+      const result = await client.newInvoice({
+        amount: '0x5f5e100',   // already hex
+        currency: 'Fibt',
+        payment_hash: MOCK_PAYMENT_HASH,
+      });
+      expect(result.invoice.data.payment_hash).toBe(MOCK_PAYMENT_HASH);
+    });
+
+    it('should convert JS numbers to hex', async () => {
+      const result = await client.graphNodes({ limit: 5 } as any);
+      expect(result.nodes).toBeDefined();
+    });
+
+    it('should leave non-numeric strings unchanged', async () => {
+      const result = await client.newInvoice({
+        amount: '0x5f5e100',
+        currency: 'Fibt',
+        description: 'Hello World 123',  // should NOT be converted
+      });
+      expect(result.invoice_address).toContain('fibt1q');
     });
   });
 });

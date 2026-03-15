@@ -7,8 +7,20 @@
 - **AgentWallet** — Client-side SDK for calling paid Agent services
 - **ServiceProvider** — Server-side SDK for receiving paid service requests
 - **HubClient** — Managed Fiber access (no node required)
-- **Trustless Payments** — Hold Invoice pattern ensures pay-on-delivery
+- **Hold Scheme** — Trustless escrow: lock → verify → settle/cancel
 - **Production-hardened** — Input validation, timeouts, CORS, body limits
+- **Fiber v0.7.1 Compatible** — Auto hex conversion for all RPC calls
+
+## 6 Ways to Use AgentPay
+
+| Method | Best For | Example |
+|---|---|---|
+| **SDK** | TypeScript apps | `new AgentWallet(...)` |
+| **MCP** | Claude/GPT AI | `npx agentpay-mcp` |
+| **Skills** | Any AI framework | `.agent/skills/agentpay-payment/` |
+| **x402** | HTTP 402 middleware | `/x402/create-hold` |
+| **Hub** | No node needed | `createHubWallet(...)` |
+| **Docker** | Self-hosted node | `pnpm setup` |
 
 ## Install
 
@@ -59,6 +71,23 @@ provider.onTask('translate', async (input) => {
 provider.listen(3001);
 ```
 
+### Hold Scheme (escrow)
+
+```ts
+// Provider creates hold invoice
+const { invoice_address, preimage, payment_hash } =
+  await wallet.createHoldInvoice('100000000', 'Translation job');
+
+// Client pays the invoice (funds locked)
+await clientWallet.rpc.sendPayment({ invoice: invoice_address });
+
+// Provider does the work, then settles (collects funds)
+await wallet.rpc.settleInvoice({ payment_hash, payment_preimage: preimage });
+
+// OR cancel (refund to client)
+await wallet.rpc.cancelInvoice({ payment_hash });
+```
+
 ### Via Hub (no Fiber node needed)
 
 ```ts
@@ -75,18 +104,16 @@ const result = await wallet.payAndCall(
 );
 ```
 
-## Protocol Flow
+## Protocol Flow (Hold Scheme)
 
 ```
 Caller                    Provider                  Fiber
-  |--- SERVICE_REQUEST -->|                           |
-  |<-- SERVICE_OFFER -----|---- newInvoice(hash) ---->|
-  |                       |                           |
-  |---- sendPayment ------|-------------------------->|
-  |                       |                           |
+  |                       |---- newInvoice(hash) ---->|  (hold)
+  |<-- INVOICE -----------|                           |
+  |---- sendPayment ------+-------------------------->|  (locked)
   |--- TASK_INPUT ------->|                           |
   |                       |---- execute task          |
-  |                       |---- settleInvoice ------->|
+  |                       |---- settleInvoice ------->|  (settled)
   |<-- TASK_RESULT -------|                           |
 ```
 

@@ -154,7 +154,7 @@ export class HubServer {
     // Assign the Hub's Fiber pubkey as the agent's pubkey
     try {
       const info = await this.fiber.nodeInfo();
-      this.db.updateAgentPubkey(agentId, info.public_key);
+      this.db.updateAgentPubkey(agentId, info.node_id || info.public_key || '');
     } catch {}
 
     this.json(res, 201, {
@@ -177,7 +177,7 @@ export class HubServer {
     this.json(res, 200, {
       agent_id: agent.id,
       name: agent.name,
-      pubkey: agent.pubkey || fiberInfo?.public_key || '',
+      pubkey: agent.pubkey || fiberInfo?.node_id || fiberInfo?.public_key || '',
       created_at: agent.created_at,
       fiber_node: fiberInfo ? {
         node_name: fiberInfo.node_name,

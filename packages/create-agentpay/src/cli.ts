@@ -376,7 +376,7 @@ async function main() {
 
   // 查看节点状态
   const info = await wallet.nodeInfo();
-  console.log('Channels:', info.open_channel_count);
+  console.log('Channels:', info.channel_count || info.open_channel_count || 0);
 
   // ═══════════════════════════════════════════════════════
   //  调用其他 Agent — 修改这里

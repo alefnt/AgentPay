@@ -146,6 +146,63 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         required: ['btc_invoice'],
       },
     },
+    {
+      name: 'create_hold_payment',
+      description:
+        'Create a Hold payment invoice. Funds are locked (escrowed) until you settle or cancel. ' +
+        'Use this for trustless pay-on-delivery: lock payment, verify work, then settle.',
+      inputSchema: {
+        type: 'object' as const,
+        properties: {
+          amount: {
+            type: 'string',
+            description: 'Amount in shannons (1 CKB = 100000000)',
+          },
+          description: {
+            type: 'string',
+            description: 'Description of what the payment is for',
+            default: 'Hold payment',
+          },
+        },
+        required: ['amount'],
+      },
+    },
+    {
+      name: 'settle_hold_payment',
+      description:
+        'Settle a held payment by revealing the preimage. ' +
+        'This releases the locked funds to the provider. Only call after verifying work is complete.',
+      inputSchema: {
+        type: 'object' as const,
+        properties: {
+          payment_hash: {
+            type: 'string',
+            description: 'The payment hash (0x-prefixed) of the hold invoice',
+          },
+          preimage: {
+            type: 'string',
+            description: 'The preimage (0x-prefixed) to reveal for settlement',
+          },
+        },
+        required: ['payment_hash', 'preimage'],
+      },
+    },
+    {
+      name: 'cancel_hold_payment',
+      description:
+        'Cancel a held payment, refunding the locked funds back to the payer. ' +
+        'Use this if the work was not completed or was unsatisfactory.',
+      inputSchema: {
+        type: 'object' as const,
+        properties: {
+          payment_hash: {
+            type: 'string',
+            description: 'The payment hash (0x-prefixed) of the hold invoice to cancel',
+          },
+        },
+        required: ['payment_hash'],
+      },
+    },
   ],
 }));
 
@@ -198,11 +255,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text' as const,
               text: JSON.stringify({
-                pubkey: info.public_key,
-                node_name: info.node_name,
-                open_channels: info.open_channel_count,
-                pending_channels: info.pending_channel_count,
-                peers: info.peers_count,
+                version: info.version,
+                node_id: info.node_id,
+                node_name: info.node_name || '',
+                channels: info.channel_count || info.open_channel_count || 0,
+                peers: info.peers_count || 0,
                 addresses: info.addresses,
               }, null, 2),
             },
@@ -263,6 +320,72 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 amount_sats: order.amount_sats,
                 fee_sats: order.fee_sats,
                 status: order.status,
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'create_hold_payment': {
+        const { randomBytes, createHash } = await import('node:crypto');
+        const preimage = randomBytes(32);
+        const hash = createHash('sha256').update(preimage).digest('hex');
+
+        const { invoice_address } = await wallet.rpc.newInvoice({
+          amount: args!.amount as string,
+          currency: (process.env.FIBER_CURRENCY as any) || 'Fibt',
+          payment_hash: `0x${hash}`,
+          description: (args!.description as string) || 'Hold payment',
+        });
+
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: JSON.stringify({
+                success: true,
+                invoice_address,
+                payment_hash: `0x${hash}`,
+                preimage: `0x${preimage.toString('hex')}`,
+                message: 'Hold invoice created. Share the invoice_address with the payer. ' +
+                  'Keep the preimage secret until you want to settle.',
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'settle_hold_payment': {
+        await wallet.rpc.settleInvoice({
+          payment_hash: args!.payment_hash as string,
+          payment_preimage: args!.preimage as string,
+        });
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: JSON.stringify({
+                success: true,
+                payment_hash: args!.payment_hash,
+                message: 'Payment settled. Funds released to provider.',
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'cancel_hold_payment': {
+        await wallet.rpc.cancelInvoice({
+          payment_hash: args!.payment_hash as string,
+        });
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: JSON.stringify({
+                success: true,
+                payment_hash: args!.payment_hash,
+                message: 'Hold payment cancelled. Funds refunded to payer.',
               }, null, 2),
             },
           ],

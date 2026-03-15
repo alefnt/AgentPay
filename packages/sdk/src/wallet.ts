@@ -103,7 +103,7 @@ export class AgentWallet {
   async getPubkey(): Promise<Pubkey> {
     if (!this._pubkey) {
       const info = await this.fiber.nodeInfo();
-      this._pubkey = info.public_key;
+      this._pubkey = info.node_id || info.public_key || '';
     }
     return this._pubkey;
   }
