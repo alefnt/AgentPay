@@ -152,6 +152,52 @@ provider.listen(3001);
 
 Then tell Claude: *"Use AgentPay to pay 1 CKB for translation service"*
 
+### Option 5: AI Agent Skills (Any Framework)
+
+AgentPay provides pre-built **Skills** — self-contained instruction files that any AI Agent framework can load to gain payment abilities.
+
+**3 Skills available:**
+
+| Skill | Path | Description |
+|---|---|---|
+| `agentpay` | `.agent/skills/agentpay/` | Combined — pay + sell + discover |
+| `agentpay-payment` | `.agent/skills/agentpay-payment/` | Payer — call paid services |
+| `agentpay-provider` | `.agent/skills/agentpay-provider/` | Provider — sell your services |
+
+**How to use:**
+
+1. **Copy the skills directory** into your AI project:
+```bash
+# Copy all 3 skills
+cp -r .agent/skills/agentpay* /your-project/.agent/skills/
+```
+
+2. **Tell your AI agent** to read the skill:
+```
+> Read the skill at .agent/skills/agentpay/SKILL.md and use it to pay
+> for a translation service at http://translate-bot:3001
+```
+
+3. The skill file teaches the AI agent to:
+   - Install `@agentpay/sdk`
+   - Create an `AgentWallet` or `ServiceProvider`
+   - Make payments using `wallet.payAndCall()`
+   - Handle errors and channel management
+
+**Skill files contain:**
+- Step-by-step instructions (AI-readable)
+- Complete TypeScript code examples
+- Payment scheme docs (hold/exact/upto)
+- Error handling patterns
+- Channel management commands
+- Cross-chain (BTC Lightning) instructions
+
+**Works with any AI framework** that supports skill/tool loading:
+- Gemini agents (`.agent/skills/`)
+- OpenAI assistants (as instruction files)
+- LangChain agents (as tool docs)
+- Custom frameworks (read SKILL.md as context)
+
 ### RGB++ Asset Bridge
 
 Bridge BTC assets to CKB via RGB++ protocol for Fiber channel payments:

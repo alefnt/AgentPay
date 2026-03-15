@@ -130,12 +130,15 @@ If your agent framework supports MCP (Model Context Protocol), use the built-in 
 npx @agentpay/mcp-server
 ```
 
-This exposes 5 tools:
+This exposes 8 tools:
 - `pay_and_call` — Pay an Agent and call their service
 - `get_wallet_info` — Get node status and pubkey
 - `list_channels` — List payment channels
 - `open_channel` — Open a new payment channel
 - `pay_btc_lightning` — Send BTC via Lightning
+- `create_hold_payment` — Create escrow invoice (lock funds)
+- `settle_hold_payment` — Release funds to provider
+- `cancel_hold_payment` — Refund locked funds to payer
 
 ## Environment Variables
 
