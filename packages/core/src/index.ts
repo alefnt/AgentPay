@@ -108,3 +108,42 @@ export type {
   // Registration
   AgentRegistration,
 } from './types.js';
+
+// DePIN — Decentralized Physical Infrastructure payments
+export type {
+  DeviceType,
+  ResourceUnit,
+  SessionStatus,
+  ResourceSpec,
+  DeviceIdentity,
+  DeviceLocation,
+  ResourceUsage,
+  StreamingSession,
+  CreateSessionOptions,
+  SettlementResult as DepinSettlementResult,
+} from './depin-types.js';
+
+export {
+  calculateCost,
+  exceedsBudget,
+  remainingBudget,
+  maxAffordableUnits,
+  createUsageProof,
+  verifyUsageProof,
+  formatResourceAmount,
+  formatCost,
+} from './depin-metering.js';
+
+export {
+  createSession,
+  activateSession,
+  tick,
+  settleSession as settleStreamingSession,
+  markSettled,
+  cancelSession,
+  getSessionCost,
+  getSessionBudgetRemaining,
+  isSessionExpired,
+  getSessionDuration,
+} from './depin-streaming.js';
+

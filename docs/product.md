@@ -53,6 +53,89 @@ AgentPay provides:
 
 **Bridging the gap**: Hub managed mode abstracts away wallets/channels (API Key = done). Fiat on-ramp via compliant stablecoins (user sees "$0.01" not "10000 shannons").
 
+## How AgentPay Enhances the Ecosystem
+
+AgentPay is **not** a competitor to x402, AP2, or Stripe — it's a **complementary settlement layer** that solves problems each platform cannot solve alone.
+
+### For x402 (Coinbase)
+
+x402 uses HTTP 402 to enable pay-per-request APIs. AgentPay plugs in as a **new payment backend** alongside ERC-20 and Solana:
+
+| Capability | x402 Native | x402 + AgentPay |
+|---|---|---|
+| Gas fee per payment | $0.01+ | **$0** |
+| Settlement speed | ~15s (block confirm) | **~50ms** |
+| Delivery guarantee | ❌ (pay then hope) | **✅ Hold Invoice** |
+| BTC payments | ❌ | **✅ via Cch** |
+| Minimum payment | ~$0.01 | **$0.000001** |
+
+**How it works:** `@agentpay/x402-facilitator` implements the x402 Facilitator interface. Any x402-enabled API server can add AgentPay as a payment option — users who pay via Fiber get zero gas, instant settlement, and Hold Invoice escrow protection.
+
+### For AP2 (Google)
+
+Google's Agent Payment Protocol defines **authorization** (who can spend), **authenticity** (is the request real), and **accountability** (who's responsible). But AP2 itself **does not settle payments** — it delegates to "payment rails."
+
+```
+AP2 defines: WHO can pay and WHY (authorization + accountability)
+AgentPay provides: HOW to settle (zero-fee micropayment channel)
+```
+
+| Scenario | AP2 + Credit Card | AP2 + AgentPay |
+|---|---|---|
+| Agent pays $0.001 for API call | ❌ $0.30 fee > transaction | ✅ Zero fee |
+| Agent operates cross-border | 🟡 FX fees + restrictions | ✅ Borderless |
+| Agent opens own account | ❌ Needs human to bind card | ✅ Fiber node = wallet |
+| Unsatisfied with result | 🟡 Chargeback weeks | ✅ Hold cancel = instant refund |
+
+**How it works:** `@agentpay/ap2` bridges AP2 message protocol to Fiber settlement. Agents using AP2 can choose AgentPay as their settlement backend for microtransactions where credit cards are impractical.
+
+### For Stripe
+
+Stripe is the world's best payment platform for **human commerce**. AgentPay handles what Stripe was never designed for: **Agent-to-Agent micropayments**.
+
+| Scenario | Best Choice | Why |
+|---|---|---|
+| User deposits $100 | **Stripe** | Fiat, KYC, compliance ✅ |
+| Agent calls $0.001 API | **AgentPay** | Zero fee, no KYC needed |
+| Enterprise SaaS subscription | **Stripe** | Invoicing, tax, reporting ✅ |
+| Agent-to-Agent micropayment | **AgentPay** | Autonomous, instant, Hold escrow |
+| IoT device-to-device | **AgentPay** | No bank account required |
+| Fiat withdrawal | **Stripe** | Bank transfer ✅ |
+
+**They coexist:** Users deposit via Stripe → exchange to stablecoin → Agent autonomously spends via AgentPay.
+
+### AgentPay's Position in the Ecosystem
+
+```
+  Human / Enterprise
+         │
+         │ Fiat / Subscription
+         ▼
+  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+  │   Stripe    │     │ AP2 (Google) │    │ x402 (CB)   │
+  │  (Fiat GW)  │     │ (Auth+Audit) │    │ (HTTP 402)  │
+  └──────┬──────┘     └──────┬──────┘    └──────┬──────┘
+         │                   │                   │
+         └───────────────────┼───────────────────┘
+                             │
+                  ┌──────────▼──────────┐
+                  │     AgentPay        │
+                  │  Settlement Layer   │
+                  │                     │
+                  │  • Zero gas         │
+                  │  • Hold Invoice     │
+                  │  • Millisecond      │
+                  │  • BTC interop      │
+                  │  • Stablecoins      │
+                  └──────────┬──────────┘
+                             │
+                  ┌──────────▼──────────┐
+                  │   Fiber Network     │
+                  │   (CKB L2 PTLC)    │
+                  └─────────────────────┘
+```
+
+
 ## Fiat Currency Path
 
 Sovereign currencies (USD, RMB) can flow into AgentPay via compliant stablecoins:
