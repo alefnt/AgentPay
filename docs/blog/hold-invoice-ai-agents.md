@@ -1,69 +1,95 @@
-# Why AI Agents Need Hold Invoice: Solving the Trust Problem in Machine-to-Machine Payments
+# Why AI Agents Need Hold Invoice / 为什么 AI Agent 需要 Hold Invoice
 
-> How AgentPay uses cryptographic escrow to let AI agents pay each other without trusting each other.
+> Solving the Trust Problem in Machine-to-Machine Payments
+> 解决机器间支付的信任难题
 
-## The Problem: Who Pays First?
+---
+
+## The Problem: Who Pays First? / 问题：谁先付钱？
 
 Imagine two AI agents that have never met:
 
-- **Agent A** (a coding assistant) needs translation
-- **Agent B** (a translator) charges 1 CKB per request
+想象两个素不相识的 AI Agent：
 
-They face a classic dilemma:
+- **Agent A** (a coding assistant) needs translation / （编程助手）需要翻译服务
+- **Agent B** (a translator) charges 1 CKB per request / （翻译 Agent）每次收费 1 CKB
+
+They face a classic dilemma / 它们面临一个经典困境：
 
 ```
-If Agent A pays first:
-  Agent B could take the money and never translate.
+If Agent A pays first:          如果 Agent A 先付钱：
+  Agent B could take the           Agent B 可能收了钱不干活。
+  money and never translate.
 
-If Agent B works first:
-  Agent A could receive the translation and never pay.
+If Agent B works first:         如果 Agent B 先干活：
+  Agent A could receive the        Agent A 可能拿了结果不付钱。
+  translation and never pay.
 ```
 
 Humans solve this with reputation, contracts, and courts. AI agents have none of that. They spin up, do work, and shut down. No contract. No memory. No recourse.
 
-**Every existing agent payment system ignores this problem.** Coinbase's x402 lets agents pay — but it's pay-and-pray. Google's AP2 handles authorization — but not settlement disputes. Stripe works for human billing — not for a 0.001-cent API call between two ephemeral bots.
+人类靠信誉、合同和法院解决。AI Agent 一样都没有——被创建、执行、关闭。没有合同，没有记忆，没有追索权。
 
-## The Solution: Hold Invoice
+**Every existing agent payment system ignores this problem.** Coinbase's x402: pay-and-pray. Google's AP2: authorization only. Stripe: human billing, not 0.001-cent bot calls.
 
-AgentPay solves this with **Hold Invoice** — a cryptographic escrow primitive borrowed from the Lightning Network and adapted for AI agents.
+**现有方案都忽视了这个问题。** Coinbase x402：付了只能祈祷。Google AP2：只管授权。Stripe：人类订阅，处理不了 Bot 间微支付。
 
-Here's how it works:
+---
+
+## The Solution: Hold Invoice / 解决方案：Hold Invoice
+
+AgentPay solves this with **Hold Invoice** — a cryptographic escrow primitive from Lightning Network, adapted for AI agents.
+
+AgentPay 用 **Hold Invoice** 解决——从闪电网络借鉴的加密托管原语，为 AI Agent 适配。
 
 ```
-Step 1: LOCK
-  Agent B creates a Hold Invoice with a secret (preimage).
-  Agent A pays it — funds are LOCKED in the payment channel.
-  Neither side can touch the money.
+Step 1: LOCK                    第一步：锁定
+  Agent B creates a Hold           Agent B 创建 Hold Invoice（含秘密值）
+  Invoice with a secret.           Agent A 支付——资金被锁定在通道中
+  Agent A pays — funds LOCKED.     双方都无法动用这笔钱
+  Neither side can touch it.
 
-Step 2: DELIVER
-  Agent B performs the translation.
-  Agent B sends back the result.
+Step 2: DELIVER                 第二步：交付
+  Agent B does the work.           Agent B 执行翻译任务
+  Agent B sends back result.       Agent B 返回翻译结果
 
-Step 3: SETTLE or REFUND
-  ✅ If the work is good → Agent B reveals the preimage → funds released
-  ❌ If Agent B never delivers → HTLC timeout → funds auto-refund to A
+Step 3: SETTLE or REFUND        第三步：结算或退款
+  Good  → reveal preimage          完成 → 揭示 preimage → 资金释放给 B
+       → funds released
+  Fail  → HTLC timeout            失败 → HTLC 超时 → 资金自动退还给 A
+       → auto-refund
 ```
 
-**No trust required.** The money is locked by cryptography, not by a promise.
+**No trust required. Money is locked by cryptography, not by a promise.**
 
-## How It Works Under the Hood
+**无需信任。钱被密码学锁住，不是靠承诺。**
 
-The magic is in a cryptographic primitive called **HTLC** (Hash Time-Locked Contract):
+---
+
+## How It Works / 底层原理
+
+The magic is **HTLC** (Hash Time-Locked Contract):
+
+核心是 **HTLC**（哈希时间锁定合约）：
 
 ```
 Hold Invoice = sha256(preimage) + timeout
 
-- The preimage is a random 32-byte secret
-- Only the service provider knows it
-- The payment is locked to the HASH of the preimage
-- Revealing the preimage = claiming the payment
-- If the preimage is never revealed, the timeout expires and funds return
+- preimage: random 32-byte secret (only provider knows)
+             随机 32 字节秘密值（只有服务方知道）
+- Payment locked to the HASH of the preimage
+  支付锁定在 preimage 的哈希值上
+- Reveal preimage = claim payment
+  揭示 preimage = 领取付款
+- Never revealed? Timeout → auto refund
+  始终未揭示？超时 → 自动退款
 ```
 
-In AgentPay's TypeScript implementation:
+TypeScript implementation / TypeScript 实现：
 
 ```typescript
 // Service Provider creates a Hold Invoice
+// 服务提供方创建 Hold Invoice
 const provider = new ServiceProvider({
   fiberRpcUrl: 'http://localhost:8227',
   services: {
@@ -76,157 +102,126 @@ const provider = new ServiceProvider({
   }
 });
 
-// Under the hood, for each request:
-// 1. Generate random preimage
-const preimage = crypto.randomBytes(32);
-// 2. Hash it
-const hash = sha256(preimage);
-// 3. Create invoice locked to this hash
-const invoice = await fiber.addInvoice({
+// Under the hood (each request) / 底层流程（每次请求）：
+const preimage = crypto.randomBytes(32);       // 1. Generate secret / 生成秘密值
+const hash = sha256(preimage);                 // 2. Hash it / 计算哈希
+const invoice = await fiber.addInvoice({       // 3. Create locked invoice / 创建锁定发票
   amount: '100000000',
   payment_preimage: preimage,
-  expiry: 3600  // 1 hour timeout
+  expiry: 3600
 });
-// 4. Client pays the invoice — funds LOCKED
-// 5. Provider does the work
-// 6. Provider reveals preimage — funds RELEASED
-await fiber.settleInvoice({ payment_preimage: preimage });
+// 4. Client pays → funds LOCKED / 客户端支付 → 资金锁定
+// 5. Provider works / 服务方执行工作
+await fiber.settleInvoice({                    // 6. Reveal → funds RELEASED / 揭示 → 资金释放
+  payment_preimage: preimage
+});
 ```
 
-## What Makes This Different
+---
+
+## Comparison / 对比
 
 ### vs. x402 (Coinbase)
 
-x402 works like this: Client sends money, then requests the resource. If the server is down, the money is gone.
-
 ```
-x402 flow:
-  Client pays → Server receives → Server maybe responds
-  (No recourse if server fails)
-
-AgentPay flow:
-  Client locks → Server works → Server settles OR timeout refunds
-  (Cryptographic guarantee)
+x402:       Pay → Maybe receive service    付款 → 可能收到服务
+AgentPay:   Lock → Work → Settle/Refund    锁定 → 干活 → 结算/退款
+            (cryptographic guarantee)       （密码学保证）
 ```
 
-### vs. Traditional Escrow (Stripe, PayPal)
-
-Traditional escrow requires a trusted third party:
+### vs. Traditional Escrow (Stripe, PayPal) / 传统托管
 
 ```
-Traditional:
-  Buyer → Escrow Service → Seller
-  (Escrow service can be hacked, go offline, or freeze funds)
+Traditional:  Buyer → Escrow Service → Seller
+              买家 → 托管服务（可被黑/宕机/冻结） → 卖家
 
-AgentPay:
-  Buyer → Payment Channel (math) → Seller
-  (No third party. Pure cryptography.)
+AgentPay:     Buyer → Payment Channel (math) → Seller
+              买家 → 支付通道（纯数学） → 卖家
 ```
 
-### vs. Smart Contracts (Ethereum)
+### vs. Smart Contracts (Ethereum) / 智能合约
 
-Ethereum can do escrow, but:
+| | Ethereum | AgentPay (Fiber) |
+|---|---|---|
+| Gas fee / Gas 费 | $0.50 - $50 | $0 |
+| Settlement / 结算 | 12s - 15min | ~20ms |
+| Throughput / 吞吐量 | ~15 TPS | Thousands / 数千 TPS |
 
-```
-Ethereum:
-  Gas fee: $0.50 - $50 per transaction
-  Settlement: 12 seconds - 15 minutes
-  Throughput: ~15 TPS
+---
 
-AgentPay (Fiber):
-  Gas fee: $0 (payment channels)
-  Settlement: ~20 milliseconds
-  Throughput: thousands of TPS per channel
-```
+## Use Cases / 使用场景
 
-## Real-World Use Cases
-
-### 1. Agent-to-Agent API Marketplace
+### 1. Agent API Marketplace / Agent 间 API 市场
 
 ```typescript
-// A coding agent that pays for multiple services
 const wallet = new AgentWallet({ fiberRpcUrl });
 
-// Pay a code review agent
+// Pay for code review / 付费调用代码审查
 const review = await wallet.payAndCall(
   'https://review-agent.example.com',
-  'review',
-  { code: myCode, language: 'typescript' }
+  'review', { code: myCode, language: 'typescript' }
 );
 
-// Pay a testing agent
+// Pay for test generation / 付费调用测试生成
 const tests = await wallet.payAndCall(
   'https://test-agent.example.com',
-  'generate_tests',
-  { code: myCode, framework: 'vitest' }
+  'generate_tests', { code: myCode, framework: 'vitest' }
 );
-
 // Each call: Lock → Work → Settle (atomic, trustless)
+// 每次调用：锁定 → 干活 → 结算（原子化，无需信任）
 ```
 
-### 2. DePIN Micropayments
-
-IoT sensors selling data streams, billed per reading:
+### 2. DePIN Micropayments / DePIN 微支付
 
 ```typescript
-// A weather station sells data via Hold Invoice
-// Consumer pays per reading, locked until data is verified
+// Weather station sells data via Hold Invoice
+// 气象站通过 Hold Invoice 卖数据，按条计费
 const data = await wallet.payAndCall(
   'https://weather-station-42.device.network',
-  'temperature',
-  { location: 'tokyo', readings: 100 }
+  'temperature', { location: 'tokyo', readings: 100 }
 );
-// 100 readings × 0.001 CKB each = 0.1 CKB total
-// Each reading: micro Hold Invoice → verify → settle
+// 100 readings x 0.001 CKB = 0.1 CKB total
+// 每条：微型 Hold Invoice → 验证 → 结算
 ```
 
-### 3. HTTP 402 with Escrow
-
-Any REST API becomes a paid API with cryptographic guarantees:
+### 3. HTTP 402 with Escrow / HTTP 402 + 托管保护
 
 ```typescript
 import { createX402Middleware } from '@agentpay-dev/x402-facilitator';
 
-// Server side: one line to add payment
+// One line → paid API with crypto guarantee
+// 一行代码 → 付费 API + 密码学保障
 const paywall = createX402Middleware({ price: '100000000' });
 
 app.get('/api/premium', paywall, (req, res) => {
   res.json({ data: 'premium content' });
 });
-
-// Client side: automatic Hold Invoice payment
-// GET /api/premium → HTTP 402 + Fiber Invoice
-// Client pays Hold Invoice → retries → gets content
+// Client: HTTP 402 → pay Hold Invoice → retry → get content
 // If server down after payment → auto-refund
+// 服务器付款后宕机？自动退款
 ```
 
-## The Bigger Picture
+---
 
-The AI agent economy is growing exponentially. Agents are being built to:
-- Search the web and summarize
-- Write and review code
-- Manage infrastructure
-- Trade financial instruments
-- Coordinate with other agents
+## The Bigger Picture / 更大的图景
 
-Every one of these interactions will involve payments — often micropayments too small for credit cards, too fast for blockchain confirmations, and between parties that have never met and will never meet again.
+The AI agent economy is growing exponentially. Every agent interaction will involve payments — micropayments too small for credit cards, too fast for blockchain confirmations, between parties that have never met.
 
-**Hold Invoice is the missing infrastructure.** It's not a new concept — it's battle-tested in Lightning Network since 2018. AgentPay adapts it for the agent economy by:
+AI Agent 经济正在爆发。每次 Agent 交互都会涉及支付——信用卡处理不了的微支付，区块链确认等不及的快速支付，素未谋面的双方之间的交易。
 
-1. **Wrapping it in an SDK** — `npm install @agentpay-dev/sdk`
-2. **Adding MCP support** — Claude and GPT can use it natively
-3. **Making it settlement-agnostic** — Works on Fiber, CKB L1, or Hub
-4. **Zero infrastructure option** — Hub mode means no nodes to run
+**Hold Invoice is the missing infrastructure.** Battle-tested in Lightning Network since 2018. AgentPay adapts it:
 
-## Try It
+**Hold Invoice 就是缺失的基础设施。** 在闪电网络上从 2018 年起经过实战检验。AgentPay 将其适配：
+
+1. **SDK** — `npm install @agentpay-dev/sdk`
+2. **MCP** — Claude / GPT native payment / 原生支付
+3. **Settlement-agnostic** — Fiber, CKB L1, or Hub / 三种结算模式
+4. **Zero infrastructure** — Hub mode, no nodes / Hub 模式无需节点
+
+## Get Started / 立即试用
 
 ```bash
 npm install @agentpay-dev/sdk @agentpay-dev/core
-```
-
-Or scaffold a complete agent:
-
-```bash
 npx create-agentpay my-agent
 ```
 
@@ -236,4 +231,6 @@ npx create-agentpay my-agent
 
 ---
 
-*AgentPay is open source under MIT license. Built on CKB Fiber Network.*
+*AgentPay is open source (MIT). Built on CKB Fiber Network.*
+
+*AgentPay 基于 MIT 协议开源，构建在 CKB Fiber Network 上。*
