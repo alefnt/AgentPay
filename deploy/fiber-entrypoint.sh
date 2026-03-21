@@ -14,15 +14,18 @@ else
   echo "[Fiber Entrypoint] Using existing key at $KEY_FILE"
 fi
 
-# FNN v0.7.1 requires RPC to bind to 127.0.0.1 (biscuit auth for public)
-# Use socat to forward 0.0.0.0:8227 -> 127.0.0.1:8227 for Docker access
-echo "[Fiber Entrypoint] Starting socat port forward (0.0.0.0:8227 -> 127.0.0.1:8227)..."
-socat TCP-LISTEN:8227,bind=0.0.0.0,fork,reuseaddr TCP:127.0.0.1:8227 &
+# Remove cch service requirement if LND is not available
+if [ ! -f "/lnd/tls.cert" ]; then
+  echo "[Fiber Entrypoint] LND not available — disabling Cch service..."
+  sed -i '/^  - cch$/d' /app/config.yml
+  # Remove entire cch section
+  sed -i '/^cch:/,$d' /app/config.yml
+fi
 
-# Use a different internal RPC port so socat can forward on 8227
-# Reconfigure: FNN listens on 127.0.0.1:18227, socat forwards 0.0.0.0:8227 -> 127.0.0.1:18227
-kill %1 2>/dev/null || true
+# FNN v0.7.1 requires RPC to bind to 127.0.0.1 (biscuit auth for public)
+# Use socat to forward 0.0.0.0:8227 -> 127.0.0.1:18227 for Docker access
 sed -i 's/127.0.0.1:8227/127.0.0.1:18227/' /app/config.yml
+echo "[Fiber Entrypoint] Starting socat port forward (0.0.0.0:8227 -> 127.0.0.1:18227)..."
 socat TCP-LISTEN:8227,bind=0.0.0.0,fork,reuseaddr TCP:127.0.0.1:18227 &
 
 echo "[Fiber Entrypoint] Starting FNN v0.7.1 (CKB Testnet)..."
