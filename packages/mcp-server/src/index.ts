@@ -32,11 +32,37 @@ import {
 import { AgentWallet } from '@agentpay-dev/sdk';
 import { formatAmount, getAssetDefinition } from '@agentpay-dev/core';
 
-// ══════════════════════════════════════════════════════════�?//  Initialize
-// ══════════════════════════════════════════════════════════�?
+// ═══════════════════════════════════════════════════════════
+//  Security: Spend Limits (prevents prompt injection fund drain)
+// ═══════════════════════════════════════════════════════════
+const MAX_SINGLE_PAYMENT = BigInt(process.env.AGENTPAY_MAX_SINGLE_PAYMENT || '1000000000');  // 10 CKB
+const MAX_DAILY_SPEND = BigInt(process.env.AGENTPAY_MAX_DAILY_SPEND || '10000000000');       // 100 CKB
+const ALLOWED_TARGETS = process.env.AGENTPAY_ALLOWED_TARGETS?.split(',').map(s => s.trim()) || [];
+
+let dailySpentShannons = 0n;
+let dailyResetDate = new Date().toDateString();
+
+function checkSpendLimits(amount: string, target?: string): void {
+  const today = new Date().toDateString();
+  if (today !== dailyResetDate) { dailySpentShannons = 0n; dailyResetDate = today; }
+  const amountBig = BigInt(amount);
+  if (amountBig > MAX_SINGLE_PAYMENT) {
+    throw new Error('Payment ' + amount + ' exceeds single-tx limit (' + MAX_SINGLE_PAYMENT + '). Set AGENTPAY_MAX_SINGLE_PAYMENT env to increase.');
+  }
+  if (dailySpentShannons + amountBig > MAX_DAILY_SPEND) {
+    throw new Error('Daily spend limit reached (' + MAX_DAILY_SPEND + '). Set AGENTPAY_MAX_DAILY_SPEND env to increase.');
+  }
+  if (ALLOWED_TARGETS.length > 0 && target && !ALLOWED_TARGETS.includes(target)) {
+    throw new Error('Target ' + target + ' not in allowed list. Set AGENTPAY_ALLOWED_TARGETS env.');
+  }
+  dailySpentShannons += amountBig;
+}
+
+// ══════════════════════════════════════════════════════════�?//  Initialize
+// ══════════════════════════════════════════════════════════�?
 const wallet = new AgentWallet({
   fiberRpcUrl: process.env.FIBER_RPC_URL || 'http://127.0.0.1:8227',
-  currency: (process.env.FIBER_CURRENCY as any) || 'Fibt',
+  currency: (process.env.FIBER_CURRENCY as any) || (process.env.FIBER_NETWORK === 'mainnet' ? 'Fibb' : 'Fibt'),
 });
 
 const server = new Server(
@@ -44,8 +70,8 @@ const server = new Server(
   { capabilities: { tools: {} } },
 );
 
-// ══════════════════════════════════════════════════════════�?//  Tool Definitions
-// ══════════════════════════════════════════════════════════�?
+// ══════════════════════════════════════════════════════════�?//  Tool Definitions
+// ══════════════════════════════════════════════════════════�?
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
@@ -130,7 +156,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     {
       name: 'pay_btc_lightning',
       description:
-        'Pay a Bitcoin Lightning Network invoice through Fiber �?Lightning cross-chain hub.',
+        'Pay a Bitcoin Lightning Network invoice through Fiber �?Lightning cross-chain hub.',
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -202,8 +228,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
   ],
 }));
 
-// ══════════════════════════════════════════════════════════�?//  Tool Handlers
-// ══════════════════════════════════════════════════════════�?
+// ══════════════════════════════════════════════════════════�?//  Tool Handlers
+// ══════════════════════════════════════════════════════════�?
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
@@ -409,8 +435,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-// ══════════════════════════════════════════════════════════�?//  Start Server
-// ══════════════════════════════════════════════════════════�?
+// ══════════════════════════════════════════════════════════�?//  Start Server
+// ══════════════════════════════════════════════════════════�?
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);

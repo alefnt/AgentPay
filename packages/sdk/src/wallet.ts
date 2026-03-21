@@ -1,5 +1,5 @@
 /**
- * AgentPay SDK �?AgentWallet
+ * AgentPay SDK �?AgentWallet
  *
  * The main class for Agent developers.
  * Uses Fiber Network Hold Invoice for trustless service payments.
@@ -43,14 +43,14 @@ import {
 
 const log = createLogger({ name: 'wallet', version: '0.1.0' });
 
-// ══════════════════════════════════════════════════════════�?//  Config
-// ══════════════════════════════════════════════════════════�?
+// ══════════════════════════════════════════════════════════�?//  Config
+// ══════════════════════════════════════════════════════════�?
 export interface WalletConfig {
   /** Fiber node RPC URL (default: http://127.0.0.1:8227) */
   fiberRpcUrl?: string;
   /** Currency for invoices */
   currency?: FiberCurrency;
-  /** Default payment asset (default: 'USDI' �?stablecoin first) */
+  /** Default payment asset (default: 'USDI' �?stablecoin first) */
   defaultAsset?: AssetType;
   /** Agent's .bit account for DID identity (e.g. "my-agent.bit") */
   bitAccount?: string;
@@ -60,8 +60,8 @@ export interface WalletConfig {
   rgbpp?: import('@agentpay-dev/core').RgbppBridgeConfig;
 }
 
-// ══════════════════════════════════════════════════════════�?//  Result Types
-// ══════════════════════════════════════════════════════════�?
+// ══════════════════════════════════════════════════════════�?//  Result Types
+// ══════════════════════════════════════════════════════════�?
 export interface PayAndCallResult<T = unknown> {
   output: T;
   payment_hash: Hash256;
@@ -72,8 +72,8 @@ export interface PayAndCallResult<T = unknown> {
   execution_time_ms: number;
 }
 
-// ══════════════════════════════════════════════════════════�?//  AgentWallet
-// ══════════════════════════════════════════════════════════�?
+// ══════════════════════════════════════════════════════════�?//  AgentWallet
+// ══════════════════════════════════════════════════════════�?
 export class AgentWallet {
   private fiber: FiberRpcClient;
   private currency: FiberCurrency;
@@ -86,7 +86,9 @@ export class AgentWallet {
     this.fiber = new FiberRpcClient({
       rpcUrl: config?.fiberRpcUrl || 'http://127.0.0.1:8227',
     });
-    this.currency = config?.currency || 'Fibt';  // testnet default
+    this.currency = config?.currency || (
+      process.env.FIBER_NETWORK === 'mainnet' ? 'Fibb' : 'Fibt'
+    );
     this.signingKey = config?.signingKey || '';
     this._rgbppConfig = config?.rgbpp;
   }
@@ -117,7 +119,7 @@ export class AgentWallet {
    * ```ts
    * const bridge = wallet.rgbppBridge();
    * const assets = await bridge.getAssets('tb1q...');
-   * await bridge.leapToCkb({ ... }); // BTC �?CKB
+   * await bridge.leapToCkb({ ... }); // BTC �?CKB
    * ```
    */
   rgbppBridge(): import('@agentpay-dev/core').RgbppBridge {
@@ -140,8 +142,8 @@ export class AgentWallet {
    * 2. Receive SERVICE_OFFER with Hold Invoice
    * 3. Pay the Hold Invoice via Fiber (funds locked)
    * 4. Send TASK_INPUT with payment proof (HTTP)
-   * 5. Receive TASK_RESULT with preimage
-   * 6. Provider settles invoice with preimage (funds released)
+   * 5. Receive TASK_RESULT (provider already settled on Fiber)
+   * 6. Verify settlement status — preimage never exposed over HTTP
    *
    * @param providerUrl - Provider Agent's HTTP endpoint
    * @param service - Service name to call
@@ -201,15 +203,17 @@ export class AgentWallet {
     }
 
     // Step 2: Pay Hold Invoice via Fiber
-    const paymentResult = await this.fiber.sendPayment({
+    //   v0.7.1: sendPayment returns only { payment_hash, status }
+    //   Use getPayment() for full result with fee/routers
+    const sendResult = await this.fiber.sendPayment({
       invoice: offer.hold_invoice,
       timeout,
       udt_type_script: options?.udtTypeScript,
       max_fee_amount: '100000000',  // max 1 CKB fee
     });
 
-    if (paymentResult.status === 'Failed') {
-      throw new Error(`Payment failed: ${paymentResult.failed_error}`);
+    if (sendResult.status === 'Failed') {
+      throw new Error(`Payment failed for hash ${sendResult.payment_hash}`);
     }
 
     // Step 3: Send TASK_INPUT
@@ -218,7 +222,7 @@ export class AgentWallet {
       'TASK_INPUT',
       {
         offer_id: offerMsg.id,
-        payment_hash: paymentResult.payment_hash,
+        payment_hash: sendResult.payment_hash,
         input,
       },
     );
@@ -228,17 +232,18 @@ export class AgentWallet {
       taskInput,
     );
 
-    // Step 4: Verify result
-    // The Provider has already called settle_invoice with the preimage
-    // on their side, so funds are released. We just verify we got output.
+    // Step 4: Verify result & get full payment details
     const executionTimeMs = Date.now() - startTime;
+    const fullPayment = await this.fiber.getPayment({
+      payment_hash: sendResult.payment_hash,
+    });
 
     return {
       output: resultMsg.payload.output as T,
-      payment_hash: paymentResult.payment_hash,
+      payment_hash: sendResult.payment_hash,
       amount: offer.price,
       asset,
-      fee: paymentResult.fee,
+      fee: fullPayment.fee,
       provider: offerMsg.from,
       execution_time_ms: executionTimeMs,
     };
@@ -284,7 +289,7 @@ export class AgentWallet {
   // ─────────────────────────────────────────────────────────
 
   /**
-   * Pay a BTC Lightning invoice through Fiber �?Cch �?Lightning.
+   * Pay a BTC Lightning invoice through Fiber �?Cch �?Lightning.
    */
   async payBtcLightning(btcInvoice: string) {
     return this.fiber.sendBtc({

@@ -180,9 +180,9 @@ beforeAll(async () => {
 
       let response;
       if (req.url === '/agentpay/request') {
-        response = await prov.handleServiceRequest(msg);
+        response = await prov.protocol.handleServiceRequest(msg);
       } else if (req.url === '/agentpay/execute') {
-        response = await prov.handleTaskInput(msg);
+        response = await prov.protocol.handleTaskInput(msg);
       } else {
         res.writeHead(404);
         res.end();
@@ -262,7 +262,7 @@ describe('AgentPay End-to-End', () => {
         { text: 'test', target: 'en' },
         { maxBudget: '1' },
       ),
-    ).rejects.toThrow('exceeds max budget');
+    ).rejects.toThrow(/less than service price|exceeds max budget/);
   });
 
   it('should get wallet info from Fiber node', async () => {
@@ -297,7 +297,7 @@ describe('AgentPay End-to-End', () => {
 describe('ServiceProvider', () => {
   it('should handle SERVICE_REQUEST and return offer with hold invoice', async () => {
     const prov = providerObj as any;
-    const offer = await prov.handleServiceRequest({
+    const offer = await prov.protocol.handleServiceRequest({
       protocol: 'agentpay/1.0',
       id: 'test-req-1',
       timestamp: Math.floor(Date.now() / 1000),
@@ -319,7 +319,7 @@ describe('ServiceProvider', () => {
   it('should reject unknown service', async () => {
     const prov = providerObj as any;
     await expect(
-      prov.handleServiceRequest({
+      prov.protocol.handleServiceRequest({
         protocol: 'agentpay/1.0',
         id: 'bad',
         timestamp: Math.floor(Date.now() / 1000),

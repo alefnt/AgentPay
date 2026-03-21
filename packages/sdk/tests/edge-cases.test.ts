@@ -165,7 +165,7 @@ describe('ServiceProvider Edge Cases', () => {
 
     const prov = provider as any;
     await expect(
-      prov.handleServiceRequest({
+      prov.protocol.handleServiceRequest({
         protocol: 'agentpay/1.0', id: 'test', timestamp: 0,
         from: '0x01', to: '0x02', signature: '',
         type: 'SERVICE_REQUEST',

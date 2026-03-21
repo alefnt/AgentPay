@@ -1,14 +1,17 @@
 /**
  * AgentPay Core — Fiber Network RPC Client
  *
- * Production-ready JSON-RPC client for all 6 Fiber Network modules.
+ * Production-ready JSON-RPC client for Fiber Network v0.7.1+ (mainnet).
  * Based on: https://github.com/nervosnetwork/fiber/blob/develop/crates/fiber-lib/src/rpc/README.md
+ *
+ * Modules: Channel, Invoice, Payment, Cch, Peer, Info, Graph
  *
  * Features:
  * - Request timeout (default 30s)
  * - Atomic request IDs (no collision)
  * - Retry with exponential backoff (configurable)
  * - Structured error types
+ * - TLC (Time Locked Contracts) based payments via PTLC
  */
 
 import type {
@@ -54,10 +57,31 @@ const DEFAULT_CONFIG: FiberConfig = {
 export class FiberRpcClient {
   private config: Required<FiberConfig>;
   private requestId = 0;
+  private connectionState: 'connected' | 'disconnected' | 'unknown' = 'unknown';
+  private lastHealthCheck = 0;
 
   constructor(config?: Partial<FiberConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config } as Required<FiberConfig>;
   }
+
+  /**
+   * Health check — verify Fiber node is responsive.
+   * Returns node info if healthy, throws if not.
+   */
+  async healthCheck(): Promise<{ status: 'connected' | 'disconnected'; nodeId?: string }> {
+    try {
+      const info = await this.nodeInfo();
+      this.connectionState = 'connected';
+      this.lastHealthCheck = Date.now();
+      return { status: 'connected', nodeId: info.node_name };
+    } catch {
+      this.connectionState = 'disconnected';
+      return { status: 'disconnected' };
+    }
+  }
+
+  /** Get current connection state */
+  getConnectionState() { return this.connectionState; }
 
   // ─────────────────────────────────────────────────────────
   //  Module: Channel
@@ -148,6 +172,8 @@ export class FiberRpcClient {
     udt_type_script?: Script;
     hash_algorithm?: 'sha256' | 'ckb_hash';
     allow_mpp?: boolean;
+    /** v0.7+ — allow trampoline routing for light-node delegated path finding */
+    allow_trampoline_routing?: boolean;
   }): Promise<{
     invoice_address: string;
     invoice: CkbInvoice;
@@ -198,6 +224,12 @@ export class FiberRpcClient {
   //  Module: Payment
   // ─────────────────────────────────────────────────────────
 
+  /**
+   * Send a payment.
+   *
+   * NOTE (v0.7.1): Returns only { payment_hash, status }.
+   * Use getPayment() to retrieve the full PaymentResult with fee, routers, etc.
+   */
   async sendPayment(params: {
     target_pubkey?: Pubkey;
     amount?: string;
@@ -215,16 +247,39 @@ export class FiberRpcClient {
     custom_records?: Record<string, string>;
     hop_hints?: Array<{
       pubkey: Pubkey;
-      channel_outpoint: string;
-      fee_rate: string;
-      tlc_expiry_delta: string;
+      channel_outpoint?: string;
+      fee_rate?: string;
+      tlc_expiry_delta?: string;
     }>;
+    /** v0.7+ — explicit trampoline routing nodes */
+    trampoline_hops?: Pubkey[];
     dry_run?: boolean;
-  }): Promise<PaymentResult> {
+  }): Promise<{ payment_hash: Hash256; status: PaymentStatus }> {
     if (!params.invoice && !params.target_pubkey) {
       throw new FiberValidationError('sendPayment', 'either invoice or target_pubkey is required');
     }
     return this.call('send_payment', params);
+  }
+
+  /**
+   * Send a payment with an explicit route (v0.7+).
+   * Useful for channel rebalancing: build a circular route with buildRouter(),
+   * then send with keysend=true.
+   */
+  async sendPaymentWithRouter(params: {
+    payment_hash?: Hash256;
+    invoice?: string;
+    keysend?: boolean;
+    router_hops: Array<{
+      pubkey: Pubkey;
+      amount: string;
+      fee: string;
+      channel_outpoint: string;
+      tlc_expiry_delta: string;
+    }>;
+    custom_records?: Record<string, string>;
+  }): Promise<{ payment_hash: Hash256; status: PaymentStatus }> {
+    return this.call('send_payment_with_router', params);
   }
 
   async getPayment(params: {

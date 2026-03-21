@@ -1,47 +1,96 @@
 /**
- * Tests for Identity module
+ * Tests for Identity module — secp256k1 ECDSA signatures
  */
 
 import { describe, it, expect } from 'vitest';
+import { createECDH } from 'node:crypto';
 import { signPayload, verifySignature, agentDisplayName } from '../src/identity.js';
 
-describe('Identity', () => {
-  describe('signPayload', () => {
-    it('should produce a 64-char hex signature', () => {
-      const sig = signPayload('aabbccdd'.repeat(8), '{"test":"data"}');
-      expect(sig).toHaveLength(64);
-      expect(/^[0-9a-f]{64}$/.test(sig)).toBe(true);
+/** Generate a random secp256k1 keypair */
+function generateKeypair() {
+  const ecdh = createECDH('secp256k1');
+  ecdh.generateKeys();
+  return {
+    privateKey: ecdh.getPrivateKey('hex'),
+    publicKey: '0x' + ecdh.getPublicKey('hex', 'compressed'),
+  };
+}
+
+describe('Identity — secp256k1 ECDSA', () => {
+  describe('signPayload + verifySignature round-trip', () => {
+    it('should sign and verify a payload successfully', () => {
+      const { privateKey, publicKey } = generateKeypair();
+      const payload = '{"test":"data","timestamp":1234567890}';
+
+      const sig = signPayload(privateKey, payload);
+      expect(typeof sig).toBe('string');
+      expect(sig.length).toBeGreaterThan(0);
+
+      const valid = verifySignature(publicKey, payload, sig);
+      expect(valid).toBe(true);
     });
 
     it('should produce different signatures for different payloads', () => {
-      const key = 'aabbccdd'.repeat(8);
-      const sig1 = signPayload(key, 'payload1');
-      const sig2 = signPayload(key, 'payload2');
+      const { privateKey } = generateKeypair();
+      const sig1 = signPayload(privateKey, 'payload1');
+      const sig2 = signPayload(privateKey, 'payload2');
       expect(sig1).not.toBe(sig2);
     });
 
     it('should produce different signatures for different keys', () => {
-      const sig1 = signPayload('aa'.repeat(32), 'same');
-      const sig2 = signPayload('bb'.repeat(32), 'same');
+      const kp1 = generateKeypair();
+      const kp2 = generateKeypair();
+      const sig1 = signPayload(kp1.privateKey, 'same-payload');
+      const sig2 = signPayload(kp2.privateKey, 'same-payload');
       expect(sig1).not.toBe(sig2);
     });
 
-    it('should be deterministic', () => {
-      const key = 'cc'.repeat(32);
-      const sig1 = signPayload(key, 'deterministic');
-      const sig2 = signPayload(key, 'deterministic');
-      expect(sig1).toBe(sig2);
+    it('should sign complex protocol messages', () => {
+      const { privateKey, publicKey } = generateKeypair();
+      const msg = JSON.stringify({
+        protocol: 'agentpay/1.0',
+        id: 'test-msg-001',
+        timestamp: 1710000000,
+        type: 'SERVICE_REQUEST',
+        payload: { service: 'translate', budget: { max_amount: '1000000000', asset: 'CKB' } },
+      });
+
+      const sig = signPayload(privateKey, msg);
+      expect(verifySignature(publicKey, msg, sig)).toBe(true);
     });
   });
 
-  describe('verifySignature', () => {
-    it('should accept valid-length signatures', () => {
-      const sig = signPayload('aa'.repeat(32), 'test');
-      expect(verifySignature('0x02pubkey', 'test', sig)).toBe(true);
+  describe('verifySignature rejections', () => {
+    it('should reject signature from wrong key', () => {
+      const kp1 = generateKeypair();
+      const kp2 = generateKeypair();
+      const sig = signPayload(kp1.privateKey, 'test');
+
+      // Verify with wrong pubkey should fail
+      expect(verifySignature(kp2.publicKey, 'test', sig)).toBe(false);
     });
 
-    it('should reject invalid-length signatures', () => {
-      expect(verifySignature('0x02pubkey', 'test', 'short')).toBe(false);
+    it('should reject signature on tampered payload', () => {
+      const { privateKey, publicKey } = generateKeypair();
+      const sig = signPayload(privateKey, 'original-data');
+
+      expect(verifySignature(publicKey, 'tampered-data', sig)).toBe(false);
+    });
+
+    it('should reject empty signature', () => {
+      const { publicKey } = generateKeypair();
+      expect(verifySignature(publicKey, 'test', '')).toBe(false);
+    });
+
+    it('should reject garbage signature', () => {
+      const { publicKey } = generateKeypair();
+      expect(verifySignature(publicKey, 'test', 'deadbeef')).toBe(false);
+    });
+
+    it('should reject invalid pubkey gracefully', () => {
+      const { privateKey } = generateKeypair();
+      const sig = signPayload(privateKey, 'test');
+      expect(verifySignature('0xinvalid', 'test', sig)).toBe(false);
     });
   });
 

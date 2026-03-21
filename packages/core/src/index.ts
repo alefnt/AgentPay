@@ -1,5 +1,5 @@
 /**
- * @agentpay-dev/core â€?Public API
+ * @agentpay-dev/core ï¿½?Public API
  *
  * Core library for AgentPay protocol, providing:
  * - Fiber Network RPC client
@@ -65,7 +65,7 @@ export type {
   AutoSettlementConfig,
 } from './settlement.js';
 
-// Types â€?re-export everything
+// Types ï¿½?re-export everything
 export type {
   // CKB / Fiber native types
   Script,
@@ -109,7 +109,7 @@ export type {
   AgentRegistration,
 } from './types.js';
 
-// DePIN â€?Decentralized Physical Infrastructure payments
+// DePIN ï¿½?Decentralized Physical Infrastructure payments
 export type {
   DeviceType,
   ResourceUnit,
@@ -147,3 +147,14 @@ export {
   getSessionDuration,
 } from './depin-streaming.js';
 
+
+// ZK Preimage Proof (Sigma Protocol)
+export { createPreimageProof, verifyPreimageProof, recoverPreimage } from './zk-preimage.js';
+export type { ZkPreimageProof } from './zk-preimage.js';
+
+// ECDH Encrypted Channel
+export { deriveSharedSecret, getPublicKey, encryptWithSharedSecret, decryptWithSharedSecret } from './ecdh.js';
+export type { EncryptedPayload } from './ecdh.js';
+// Rate Limiter
+export { RateLimiter, createRateLimiter } from './rate-limiter.js';
+export type { RateLimitConfig } from './rate-limiter.js';

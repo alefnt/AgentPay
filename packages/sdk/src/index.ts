@@ -1,5 +1,5 @@
 /**
- * @agentpay-dev/sdk â€?Public API
+ * @agentpay-dev/sdk ï¿½?Public API
  *
  * Two main classes:
  * - AgentWallet: For Caller Agents (pay and call services)
@@ -40,3 +40,30 @@ export type {
   PaymentResult,
   ProtocolMessage,
 } from '@agentpay-dev/core';
+
+
+export { SecureChannel } from './secure-channel.js';
+export type { SecureResultPayload } from './secure-channel.js';
+
+// Refactored Provider layers
+export { ProviderServer } from './provider-server.js';
+export type { ServerConfig, RouteHandler } from './provider-server.js';
+export { ProtocolHandler } from './provider-protocol.js';
+export { ProviderFacade } from './provider-handler.js';
+export type { ProviderFacadeConfig } from './provider-handler.js';
+
+// x402 / MPP Universal Gateway
+export { X402Gateway } from './x402-gateway.js';
+export type { X402PaymentRequirements, X402PaymentPayload, X402GatewayConfig } from './x402-gateway.js';
+
+// Streaming Micropayments (DePIN / high-frequency)
+export { StreamingProvider } from './streaming-provider.js';
+export type { StreamingConfig } from './streaming-provider.js';
+
+// Deposit Gateway (fee compression for EVM agents)
+export { DepositGateway } from './x402-deposit.js';
+export type { DepositAccount, DepositTransaction } from './x402-deposit.js';
+
+// Nevermined Payment Backend
+export { NeverminedBackend } from './nevermined-backend.js';
+export type { NeverminedPayment, NeverminedBackendConfig } from './nevermined-backend.js';

@@ -235,9 +235,10 @@ export interface TaskInputPayload {
 /** Task result from Provider to Caller */
 export interface TaskResultPayload {
   output: unknown;
-  preimage: Hash256;      // preimage to settle the hold invoice
+  settled: boolean;       // true = provider already settled on Fiber (preimage never exposed)
+  payment_hash: Hash256;  // caller can verify settlement via fiber.getPayment()
   execution_time_ms: number;
-  proof_hash: string;     // sha256(output)
+  proof_hash: string;     // sha256(output) — proves output integrity
 }
 
 /** Error payload */

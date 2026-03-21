@@ -5,4 +5,20 @@ export default defineConfig({
     globals: true,
     environment: 'node',
   },
+  esbuild: {
+    target: 'es2022',
+    format: 'esm',
+    tsconfigRaw: JSON.stringify({
+      compilerOptions: {
+        target: 'ES2022',
+        module: 'ESNext',
+        moduleResolution: 'bundler',
+        strict: true,
+        esModuleInterop: true,
+        skipLibCheck: true,
+        declaration: true,
+        sourceMap: true,
+      },
+    }),
+  },
 });
